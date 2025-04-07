@@ -505,9 +505,11 @@
     // Prepare file data (if a file is selected)
     let fileData = null;
     let fileName = "None";
+    let fileType = null;
     if (files.length > 0) {
         const file = files[0];
         fileName = file.name;
+        fileType = file.type || "application/octet-stream"; // Default to generic type if unknown
         fileData = await new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result.split(',')[1]); // Get base64 data (remove "data:image/jpeg;base64," prefix)
@@ -515,9 +517,11 @@
         });
     }
 
-    // Log the file data to check if it's being read correctly
+    // Log the file details to check if it's being read correctly
     console.log("File Name:", fileName);
-    console.log("File Data:", fileData);
+    console.log("File Type:", fileType);
+    console.log("File Data Length:", fileData ? fileData.length : "No data");
+    console.log("File Data Preview:", fileData ? fileData.substring(0, 50) : "No data");
 
     // Prepare job data
     const jobData = {
@@ -528,6 +532,7 @@
         pocEmail: pocEmail,
         jobType: jobType,
         fileName: fileName,
+        fileType: fileType,
         fileData: fileData
     };
 
@@ -566,7 +571,6 @@
 
     document.getElementById('jobForm').reset();
 }
-
         // Send message
         function sendMessage() {
             const input = document.getElementById('messageInput');
