@@ -11,6 +11,10 @@
         {
             "source": "/api/live-tracking",
             "destination": "/api/live-tracking.js"
+        },
+        {
+            "source": "/api/add-vehicle",
+            "destination": "/api/add-vehicle.js"
         }
     ]
 }

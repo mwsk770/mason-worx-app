@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 module.exports = async (req, res) => {
     try {
         const apiKey = "YcjaBtI5zKDABM1wOo6a7S-cLUJH0uw8emiHswXcS8w"; // Your OneStepGPS API key
-        const url = `https://track.onestepgps.com/v3/vehicles?api_key=${apiKey}`; // Updated to v3 endpoint
+        const url = `https://track.onestepgps.com/v3/devices?api_key=${apiKey}`; // Updated to fetch devices
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -14,19 +14,19 @@ module.exports = async (req, res) => {
         // Log the raw response for debugging
         console.log("OneStepGPS API response:", data);
 
-        // Check if the response contains vehicle data
+        // Check if the response contains device data
         if (!data || !Array.isArray(data)) {
-            throw new Error("Unexpected response format from OneStepGPS API: Expected an array of vehicles");
+            throw new Error("Unexpected response format from OneStepGPS API: Expected an array of devices");
         }
 
-        // Format the vehicle data for the app
-        const vehicles = data.map(vehicle => ({
-            id: vehicle.vehicle_id || vehicle.id || "Unknown ID",
-            name: vehicle.vehicle_name || vehicle.name || "Unknown Vehicle",
-            latitude: parseFloat(vehicle.latitude) || 0,
-            longitude: parseFloat(vehicle.longitude) || 0,
-            speed: parseFloat(vehicle.speed) || 0,
-            status: vehicle.status || "Unknown" // e.g., "moving", "stopped", "idling"
+        // Format the device data as vehicles for the app
+        const vehicles = data.map(device => ({
+            id: device.factory_id || device.id || "Unknown ID",
+            name: device.name || "Unknown Vehicle",
+            latitude: parseFloat(device.latitude) || 0,
+            longitude: parseFloat(device.longitude) || 0,
+            speed: parseFloat(device.speed) || 0,
+            status: device.status || "Unknown" // e.g., "moving", "stopped", "idling"
         }));
 
         // Filter out vehicles with invalid coordinates
