@@ -162,26 +162,214 @@
         }
         /* Weather */
         .weather {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s;
+            border-radius: 16px;
+            padding: 10px;
         }
-        .weather-current {
+        .weather:hover {
+            transform: scale(1.02);
+        }
+        .weather-summary {
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-        .weather-current .icon {
-            font-size: 2rem;
-        }
-        .weather-forecast {
-            display: flex;
             justify-content: space-between;
-            gap: 5px;
+            padding: 5px;
         }
-        .weather-forecast div {
-            text-align: center;
+        .weather-icon {
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+        .weather-info {
+            flex-grow: 1;
+        }
+        .weather-info strong {
+            font-size: 1.5rem;
+        }
+        .refresh-icon {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #f39c12;
+        }
+        .refresh-icon:hover {
+            color: #e08e0b;
+        }
+        .minute-forecast {
+            margin: 10px 0;
+        }
+        .minute-forecast p {
+            font-size: 0.9rem;
+            color: #999;
+            margin-bottom: 5px;
+        }
+        .minute-forecast-bars {
+            display: flex;
+            align-items: flex-end;
+            height: 40px;
+            overflow-x: auto;
+            position: relative;
+            gap: 2px;
+        }
+        .minute-bar {
             flex: 1;
+            min-width: 8px;
+            background-color: #4b6cb7;
+            opacity: 0.6;
+            position: relative;
+        }
+        .minute-bar-label {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: #999;
+        }
+        .hourly-forecast-8 {
+            display: flex;
+            overflow-x: auto;
+            margin-top: 10px;
+            padding-bottom: 5px;
+        }
+        .hourly-forecast-8 div {
+            text-align: center;
+            min-width: 60px;
+            margin-right: 10px;
+        }
+        .weather-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .weather-modal-content {
+            background-color: #1a1a1a;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px; /* Increased width for desktop */
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        @media (max-width: 600px) {
+            .weather-modal-content {
+                max-width: 90%;
+            }
+        }
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 2rem;
+            color: #f39c12;
+            cursor: pointer;
+        }
+        .close-modal:hover {
+            color: #e08e0b;
+        }
+        .weather-current-detailed {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .weather-icon-large {
+            font-size: 3rem;
+            margin-right: 15px;
+        }
+        .forecast-day {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+        }
+        .forecast-day:last-child {
+            border-bottom: none;
+        }
+        .forecast-day:hover {
+            background-color: #333;
+        }
+        .forecast-day.bounce {
+            animation: bounce 0.3s ease;
+        }
+        @keyframes bounce {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .temp-bar {
+            flex-grow: 1;
+            height: 8px;
+            background: linear-gradient(to right, #4b6cb7, #f7b733);
+            border-radius: 4px;
+            position: relative;
+            margin: 0 15px;
+        }
+        .temp-marker {
+            position: absolute;
+            top: -20px;
+            font-size: 0.9rem;
+            color: #999;
+        }
+        .temp-marker.low {
+            left: 0;
+        }
+        .temp-marker.high {
+            right: 0;
+        }
+        .forecast-details {
+            display: none;
+            padding: 10px;
+            background-color: #2c2c2c;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+        .forecast-details.active {
+            display: block;
+        }
+        .hourly-forecast {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding-bottom: 10px;
+        }
+        .hourly-forecast div {
+            text-align: center;
+            min-width: 80px;
+            padding: 5px;
+            background-color: #333;
+            border-radius: 8px;
+        }
+        .live-tracking {
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s;
+            border-radius: 16px;
+            padding: 10px;
+        }
+        .live-tracking:hover {
+            transform: scale(1.02);
+        }
+        .live-tracking-content {
+            margin-top: 10px;
+        }
+        #live-tracking-map {
+            width: 100%;
+            background-color: #333;
+            border-radius: 8px;
+        }
+        #live-tracking-map.expanded {
+            height: 300px;
         }
         /* Calendar */
         .calendar {
@@ -289,218 +477,8 @@
                 gap: 10px;
             }
         }
-.weather {
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s;
-    border-radius: 16px;
-    padding: 10px;
-}
-.weather:hover {
-    transform: scale(1.02);
-}
-.weather-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 5px;
-}
-.weather-icon {
-    font-size: 2rem;
-    margin-right: 10px;
-}
-.weather-info {
-    flex-grow: 1;
-}
-.weather-info strong {
-    font-size: 1.5rem;
-}
-.refresh-icon {
-    cursor: pointer;
-    font-size: 1.2rem;
-    color: #f39c12;
-}
-.refresh-icon:hover {
-    color: #e08e0b;
-}
-.minute-forecast {
-    margin: 10px 0;
-}
-.minute-forecast p {
-    font-size: 0.9rem;
-    color: #999;
-    margin-bottom: 5px;
-}
-.minute-forecast-bars {
-    display: flex;
-    align-items: flex-end;
-    height: 40px;
-    overflow-x: auto;
-    position: relative;
-    gap: 2px;
-}
-.minute-bar {
-    flex: 1;
-    min-width: 8px;
-    background-color: #4b6cb7;
-    opacity: 0.6;
-    position: relative;
-}
-.minute-bar-label {
-    position: absolute;
-    bottom: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.7rem;
-    color: #999;
-}
-.hourly-forecast-8 {
-    display: flex;
-    overflow-x: auto;
-    margin-top: 10px;
-    padding-bottom: 5px;
-}
-.hourly-forecast-8 div {
-    text-align: center;
-    min-width: 60px;
-    margin-right: 10px;
-}
-.weather-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 1000;
-    overflow-y: auto;
-}
-.weather-modal-content {
-    background-color: #1a1a1a;
-    margin: 5% auto;
-    padding: 20px;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 800px; /* Increased width for desktop */
-    position: relative;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-@media (max-width: 600px) {
-    .weather-modal-content {
-        max-width: 90%;
-    }
-}
-.close-modal {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 2rem;
-    color: #f39c12;
-    cursor: pointer;
-}
-.close-modal:hover {
-    color: #e08e0b;
-}
-.weather-current-detailed {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-}
-.weather-icon-large {
-    font-size: 3rem;
-    margin-right: 15px;
-}
-.forecast-day {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 15px 0;
-    border-bottom: 1px solid #333;
-    cursor: pointer;
-}
-.forecast-day:last-child {
-    border-bottom: none;
-}
-.forecast-day:hover {
-    background-color: #333;
-}
-.forecast-day.bounce {
-    animation: bounce 0.3s ease;
-}
-@keyframes bounce {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-.temp-bar {
-    flex-grow: 1;
-    height: 8px;
-    background: linear-gradient(to right, #4b6cb7, #f7b733);
-    border-radius: 4px;
-    position: relative;
-    margin: 0 15px;
-}
-.temp-marker {
-    position: absolute;
-    top: -20px;
-    font-size: 0.9rem;
-    color: #999;
-}
-.temp-marker.low {
-    left: 0;
-}
-.temp-marker.high {
-    right: 0;
-}
-.forecast-details {
-    display: none;
-    padding: 10px;
-    background-color: #2c2c2c;
-    border-radius: 8px;
-    margin-top: 5px;
-}
-.forecast-details.active {
-    display: block;
-}
-.hourly-forecast {
-    display: flex;
-    overflow-x: auto;
-    gap: 15px;
-    padding-bottom: 10px;
-}
-.hourly-forecast div {
-    text-align: center;
-    min-width: 80px;
-    padding: 5px;
-    background-color: #333;
-    border-radius: 8px;
-}
-.live-tracking {
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s;
-    border-radius: 16px;
-    padding: 10px;
-}
-.live-tracking:hover {
-    transform: scale(1.02);
-}
-.live-tracking-content {
-    margin-top: 10px;
-}
-#live-tracking-map {
-    width: 100%;
-    background-color: #333;
-    border-radius: 8px;
-}
-#live-tracking-map.expanded {
-    height: 300px;
-}
     </style>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAAWjrhtwCMGuDGntEVvSZ7ng0m_IaWgXw=places"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAAWjrhtwCMGuDGntEVvSZ7ng0m_IaWgXw&libraries=places"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -563,59 +541,57 @@
                     <p><strong>MW497</strong><br>125 Main St, Somewhere, NY</p>
                     <p><strong>MW515</strong><br>458 Oak Ave, Another Town, NJ</p>
                 </div>
-<div class="dashboard-card weather" onclick="openWeatherModal()">
-    <div class="weather-summary">
-        <span class="weather-icon" id="weather-icon"></span>
-        <div class="weather-info">
-            <strong id="weather-temp"></strong>
-            <span id="weather-condition"></span>, <span id="weather-location"></span>
-        </div>
-        <span class="refresh-icon" onclick="fetchWeather(event)">⟳</span>
-    </div>
-    <div class="minute-forecast" id="minute-forecast">
-        <p id="rain-start-message"></p>
-        <div class="minute-forecast-bars" id="minute-forecast-bars">
-            <!-- Minute-by-minute forecast bars will be populated dynamically -->
-        </div>
-    </div>
-    <div class="hourly-forecast-8" id="hourly-forecast-8">
-        <!-- 8-hour forecast will be populated dynamically -->
-    </div>
-</div>
-
-<div class="dashboard-card live-tracking" id="live-tracking-tile" style="display: none;">
-    <h2>Live Tracking</h2>
-    <div class="live-tracking-content">
-        <p id="live-tracking-status">Loading vehicles...</p>
-        <div id="live-tracking-map" style="height: 0; overflow: hidden; transition: height 0.3s ease;"></div>
-    </div>
-</div>
-
-<!-- Weather Modal -->
-<div class="weather-modal" id="weather-modal">
-    <div class="weather-modal-content">
-        <span class="close-modal" onclick="closeWeatherModal()">×</span>
-        <h2>Weather Details</h2>
-        <div class="weather-current-detailed">
-            <span class="weather-icon-large" id="weather-icon-modal"></span>
-            <div>
-                <strong id="weather-temp-modal"></strong><br>
-                <span id="weather-condition-modal"></span>, <span id="weather-location-modal"></span>
-            </div>
-        </div>
-        <div class="minute-forecast" id="minute-forecast-modal">
-            <h3>Next Hour Precipitation</h3>
-            <p id="rain-start-message-modal"></p>
-            <div class="minute-forecast-bars" id="minute-forecast-bars-modal">
-                <!-- Minute-by-minute forecast bars will be populated dynamically -->
-            </div>
-        </div>
-        <div class="weather-forecast" id="weather-forecast">
-            <!-- 10-day forecast will be populated dynamically -->
-        </div>
-    </div>
-</div>
-</div>                <div class="dashboard-card tasks">
+                <div class="dashboard-card weather" onclick="openWeatherModal()">
+                    <div class="weather-summary">
+                        <span class="weather-icon" id="weather-icon"></span>
+                        <div class="weather-info">
+                            <strong id="weather-temp"></strong>
+                            <span id="weather-condition"></span>, <span id="weather-location"></span>
+                        </div>
+                        <span class="refresh-icon" onclick="fetchWeather(event)">⟳</span>
+                    </div>
+                    <div class="minute-forecast" id="minute-forecast">
+                        <p id="rain-start-message"></p>
+                        <div class="minute-forecast-bars" id="minute-forecast-bars">
+                            <!-- Minute-by-minute forecast bars will be populated dynamically -->
+                        </div>
+                    </div>
+                    <div class="hourly-forecast-8" id="hourly-forecast-8">
+                        <!-- 8-hour forecast will be populated dynamically -->
+                    </div>
+                </div>
+                <div class="dashboard-card live-tracking" id="live-tracking-tile" style="display: none;">
+                    <h2>Live Tracking</h2>
+                    <div class="live-tracking-content">
+                        <p id="live-tracking-status">Loading vehicles...</p>
+                        <div id="live-tracking-map" style="height: 0; overflow: hidden; transition: height 0.3s ease;"></div>
+                    </div>
+                </div>
+                <!-- Weather Modal -->
+                <div class="weather-modal" id="weather-modal">
+                    <div class="weather-modal-content">
+                        <span class="close-modal" onclick="closeWeatherModal()">×</span>
+                        <h2>Weather Details</h2>
+                        <div class="weather-current-detailed">
+                            <span class="weather-icon-large" id="weather-icon-modal"></span>
+                            <div>
+                                <strong id="weather-temp-modal"></strong><br>
+                                <span id="weather-condition-modal"></span>, <span id="weather-location-modal"></span>
+                            </div>
+                        </div>
+                        <div class="minute-forecast" id="minute-forecast-modal">
+                            <h3>Next Hour Precipitation</h3>
+                            <p id="rain-start-message-modal"></p>
+                            <div class="minute-forecast-bars" id="minute-forecast-bars-modal">
+                                <!-- Minute-by-minute forecast bars will be populated dynamically -->
+                            </div>
+                        </div>
+                        <div class="weather-forecast" id="weather-forecast">
+                            <!-- 10-day forecast will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-card tasks">
                     <h2>Tasks</h2>
                     <ul>
                         <li><input type="checkbox"> Review estimate for MW515</li>
@@ -725,84 +701,85 @@
 
         // Job intake submission
         async function submitJob(event) {
-    event.preventDefault();
-    const address = document.getElementById('address').value;
-    const client = document.getElementById('client').value;
-    const pocName = document.getElementById('pocName').value || 'N/A';
-    const pocPhone = document.getElementById('pocPhone').value || 'N/A';
-    const pocEmail = document.getElementById('pocEmail').value || 'N/A';
-    const jobType = document.getElementById('jobType').value;
-    const files = document.getElementById('plans').files;
+            event.preventDefault();
+            const address = document.getElementById('address').value;
+            const client = document.getElementById('client').value;
+            const pocName = document.getElementById('pocName').value || 'N/A';
+            const pocPhone = document.getElementById('pocPhone').value || 'N/A';
+            const pocEmail = document.getElementById('pocEmail').value || 'N/A';
+            const jobType = document.getElementById('jobType').value;
+            const files = document.getElementById('plans').files;
 
-    // Prepare file data (if a file is selected)
-    let fileData = null;
-    let fileName = "None";
-    let fileType = null;
-    if (files.length > 0) {
-        const file = files[0];
-        fileName = file.name;
-        fileType = file.type || "application/octet-stream"; // Default to generic type if unknown
-        fileData = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(',')[1]); // Get base64 data (remove "data:image/jpeg;base64," prefix)
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // Log the file details to check if it's being read correctly
-    console.log("File Name:", fileName);
-    console.log("File Type:", fileType);
-    console.log("File Data Length:", fileData ? fileData.length : "No data");
-    console.log("File Data Preview:", fileData ? fileData.substring(0, 50) : "No data");
-
-    // Prepare job data
-    const jobData = {
-        address: address,
-        client: client,
-        pocName: pocName,
-        pocPhone: pocPhone,
-        pocEmail: pocEmail,
-        jobType: jobType,
-        fileName: fileName,
-        fileType: fileType,
-        fileData: fileData
-    };
-
-    // Update preview
-    document.getElementById('previewAddress').textContent = address;
-    document.getElementById('previewClient').textContent = client;
-    document.getElementById('previewPoc').textContent = `${pocName} (${pocPhone}, ${pocEmail})`;
-    document.getElementById('previewJobType').textContent = jobType;
-    document.getElementById('previewFiles').textContent = fileName;
-    document.getElementById('jobPreview').classList.add('active');
-
-    // Send to Google Apps Script via proxy
-    const scriptUrl = "/api/proxy";
-    try {
-        console.log("Submitting job data:", jobData);
-        console.log("Sending request to:", scriptUrl);
-        const response = await fetch(scriptUrl, {
-            method: 'POST',
-            body: JSON.stringify(jobData),
-            headers: {
-                'Content-Type': 'application/json'
+            // Prepare file data (if a file is selected)
+            let fileData = null;
+            let fileName = "None";
+            let fileType = null;
+            if (files.length > 0) {
+                const file = files[0];
+                fileName = file.name;
+                fileType = file.type || "application/octet-stream"; // Default to generic type if unknown
+                fileData = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result.split(',')[1]); // Get base64 data (remove "data:image/jpeg;base64," prefix)
+                    reader.readAsDataURL(file);
+                });
             }
-        });
-        console.log("Response status:", response.status);
-        const result = await response.json();
-        console.log("Response result:", result);
-        if (result.status === "success") {
-            alert(`Job submitted: ${result.jobNumber} - ${client} at ${address}`);
-        } else {
-            alert(`Error: ${result.message}`);
-        }
-    } catch (error) {
-        console.error("Fetch error:", error);
-        alert(`Error submitting job: ${error.message}`);
-    }
 
-    document.getElementById('jobForm').reset();
-}
+            // Log the file details to check if it's being read correctly
+            console.log("File Name:", fileName);
+            console.log("File Type:", fileType);
+            console.log("File Data Length:", fileData ? fileData.length : "No data");
+            console.log("File Data Preview:", fileData ? fileData.substring(0, 50) : "No data");
+
+            // Prepare job data
+            const jobData = {
+                address: address,
+                client: client,
+                pocName: pocName,
+                pocPhone: pocPhone,
+                pocEmail: pocEmail,
+                jobType: jobType,
+                fileName: fileName,
+                fileType: fileType,
+                fileData: fileData
+            };
+
+            // Update preview
+            document.getElementById('previewAddress').textContent = address;
+            document.getElementById('previewClient').textContent = client;
+            document.getElementById('previewPoc').textContent = `${pocName} (${pocPhone}, ${pocEmail})`;
+            document.getElementById('previewJobType').textContent = jobType;
+            document.getElementById('previewFiles').textContent = fileName;
+            document.getElementById('jobPreview').classList.add('active');
+
+            // Send to Google Apps Script via proxy
+            const scriptUrl = "/api/proxy";
+            try {
+                console.log("Submitting job data:", jobData);
+                console.log("Sending request to:", scriptUrl);
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    body: JSON.stringify(jobData),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                console.log("Response status:", response.status);
+                const result = await response.json();
+                console.log("Response result:", result);
+                if (result.status === "success") {
+                    alert(`Job submitted: ${result.jobNumber} - ${client} at ${address}`);
+                } else {
+                    alert(`Error: ${result.message}`);
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                alert(`Error submitting job: ${error.message}`);
+            }
+
+            document.getElementById('jobForm').reset();
+        }
+
         // Send message
         function sendMessage() {
             const input = document.getElementById('messageInput');
@@ -823,234 +800,231 @@
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
-// Fetch and display real weather data
-async function fetchWeather(event) {
-    if (event) event.stopPropagation(); // Prevent modal from opening when clicking refresh
-    try {
-        // Get the user's location
-        const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
 
-        // Fetch weather data
-        const response = await fetch(`/api/weather?lat=${latitude}&lon=${longitude}`);
-        const data = await response.json();
-
-        // Update summary view
-        document.getElementById('weather-temp').textContent = `${data.current.temperature}°`;
-        document.getElementById('weather-icon').textContent = data.current.icon;
-        document.getElementById('weather-condition').textContent = data.current.condition;
-        document.getElementById('weather-location').textContent = data.current.location;
-
-        // Apply gradient background based on condition
-        const weatherCard = document.querySelector('.weather');
-        weatherCard.style.background = getGradientForCondition(data.current.condition);
-
-        // Update minute-by-minute forecast on main card
-        const minuteForecastContainer = document.getElementById('minute-forecast-bars');
-        const maxPrecip = Math.max(...data.minuteForecast.map(m => m.precipitation), 0.1); // Avoid division by 0
-        minuteForecastContainer.innerHTML = data.minuteForecast.map(minute => `
-            <div class="minute-bar" style="height: ${(minute.precipitation / maxPrecip) * 100}%">
-                <span class="minute-bar-label">${minute.label}</span>
-            </div>
-        `).join('');
-        document.getElementById('rain-start-message').textContent = data.rainStartMessage;
-
-        // Update 8-hour forecast on main card
-        const hourly8Container = document.getElementById('hourly-forecast-8');
-        hourly8Container.innerHTML = data.hourly8.map(hour => `
-            <div>
-                <div>${hour.time}</div>
-                <div>${hour.conditionIcon}</div>
-                <div>${hour.temp}°</div>
-            </div>
-        `).join('');
-
-        // Update modal view
-        document.getElementById('weather-temp-modal').textContent = `${data.current.temperature}°`;
-        document.getElementById('weather-icon-modal').textContent = data.current.icon;
-        document.getElementById('weather-condition-modal').textContent = data.current.condition;
-        document.getElementById('weather-location-modal').textContent = data.current.location;
-
-        // Update minute-by-minute forecast in modal
-        const minuteForecastModalContainer = document.getElementById('minute-forecast-bars-modal');
-        minuteForecastModalContainer.innerHTML = data.minuteForecast.map(minute => `
-            <div class="minute-bar" style="height: ${(minute.precipitation / maxPrecip) * 100}%">
-                <span class="minute-bar-label">${minute.label}</span>
-            </div>
-        `).join('');
-        document.getElementById('rain-start-message-modal').textContent = data.rainStartMessage;
-
-        // Update 10-day forecast in modal
-        const forecastContainer = document.getElementById('weather-forecast');
-        forecastContainer.innerHTML = data.forecast.map((day, index) => `
-            <div class="forecast-day" onclick="toggleDayDetails(${index})">
-                <span>${day.dayName}</span>
-                <span class="weather-icon">${day.conditionIcon}</span>
-                <div class="temp-bar">
-                    <span class="temp-marker low">${day.lowTemp}°</span>
-                    <span class="temp-marker high">${day.highTemp}°</span>
-                </div>
-            </div>
-            <div class="forecast-details" id="day-details-${index}">
-                <h3>${day.dayName} Hourly Forecast</h3>
-                <div class="hourly-forecast">
-                    ${day.hourly.map(hour => `
-                        <div>
-                            <div>${hour.time}</div>
-                            <div>${hour.temp}° ${hour.conditionIcon}</div>
-                            <div>Precip: ${hour.precipitation}%</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error("Error fetching weather:", error);
-        // Fallback to fake data if the API fails
-        document.getElementById('weather-temp').textContent = "72°";
-        document.getElementById('weather-icon').textContent = "☀️";
-        document.getElementById('weather-condition').textContent = "Sunny";
-        document.getElementById('weather-location').textContent = "Springfield, IL";
-        document.getElementById('rain-start-message').textContent = "No rain in the next hour.";
-        document.getElementById('minute-forecast-bars').innerHTML = '';
-        document.getElementById('hourly-forecast-8').innerHTML = `
-            <div><div>4PM</div><div>☀️</div><div>72°</div></div>
-            <div><div>5PM</div><div>☀️</div><div>71°</div></div>
-            <div><div>6PM</div><div>☁️</div><div>70°</div></div>
-            <div><div>7PM</div><div>☁️</div><div>69°</div></div>
-            <div><div>8PM</div><div>🌙</div><div>68°</div></div>
-            <div><div>9PM</div><div>🌙</div><div>67°</div></div>
-            <div><div>10PM</div><div>🌙</div><div>66°</div></div>
-            <div><div>11PM</div><div>🌙</div><div>65°</div></div>
-        `;
-    }
-}
-
-// Toggle expandable day details and collapse others
-function toggleDayDetails(index) {
-    event.stopPropagation(); // Prevent modal from closing
-
-    // Check if the day has hourly data (only current day and next day have data)
-    const hasHourlyData = index <= 1; // Current day (0) and next day (1)
-
-    if (!hasHourlyData) {
-        // Apply bounce effect for days without hourly data
-        const dayElement = document.querySelectorAll('.forecast-day')[index];
-        dayElement.classList.add('bounce');
-        return;
-    }
-
-    // Collapse all other expanded details
-    const allDetails = document.querySelectorAll('.forecast-details');
-    allDetails.forEach((detail, i) => {
-        if (i !== index) {
-            detail.classList.remove('active');
-        }
-    });
-
-    // Toggle the clicked day's details
-    const details = document.getElementById(`day-details-${index}`);
-    details.classList.toggle('active');
-}
-
-// Open the weather modal
-function openWeatherModal() {
-    document.getElementById('weather-modal').style.display = 'block';
-}
-
-// Close the weather modal
-function closeWeatherModal() {
-    document.getElementById('weather-modal').style.display = 'none';
-}
-
-// Get gradient background based on weather condition
-function getGradientForCondition(condition) {
-    switch (condition.toLowerCase()) {
-        case "clear sky":
-            return "linear-gradient(135deg, #f7b733, #fc4a1a)"; // Sunny gradient
-        case "few clouds":
-        case "scattered clouds":
-        case "broken clouds":
-        case "overcast clouds":
-            return "linear-gradient(135deg, #bdc3c7, #2c3e50)"; // Cloudy gradient
-        case "light rain":
-        case "moderate rain":
-        case "heavy rain":
-        case "rain":
-            return "linear-gradient(135deg, #4b6cb7, #182848)"; // Rainy gradient
-        case "thunderstorm":
-            return "linear-gradient(135deg, #2c3e50, #4b5e67)"; // Stormy gradient
-        default:
-            return "linear-gradient(135deg, #bdc3c7, #2c3e50)"; // Default gradient
-    }
-}
-
-// Call fetchWeather when the page loads
-window.addEventListener('load', fetchWeather);
-// Fetch and display live tracking data
-async function fetchLiveTracking() {
-    try {
-        const response = await fetch('/api/live-tracking');
-        const data = await response.json();
-
-        const statusElement = document.getElementById('live-tracking-status');
-        if (data.vehicles.length === 0) {
-            statusElement.textContent = "No vehicles found.";
-            return;
-        }
-
-        statusElement.textContent = `${data.vehicles.length} vehicles online`;
-
-        // Initialize Google Map when tile is expanded
-        const mapElement = document.getElementById('live-tracking-map');
-        if (mapElement.classList.contains('expanded')) {
-            const map = new google.maps.Map(mapElement, {
-                center: { lat: data.vehicles[0].latitude, lng: data.vehicles[0].longitude },
-                zoom: 10
-            });
-
-            // Add markers for each vehicle
-            data.vehicles.forEach(vehicle => {
-                new google.maps.Marker({
-                    position: { lat: vehicle.latitude, lng: vehicle.longitude },
-                    map: map,
-                    title: `${vehicle.name} (${vehicle.status}, ${vehicle.speed} mph)`
+        // Fetch and display real weather data
+        async function fetchWeather(event) {
+            if (event) event.stopPropagation(); // Prevent modal from opening when clicking refresh
+            try {
+                // Get the user's location
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject);
                 });
-            });
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                // Fetch weather data
+                const response = await fetch(`/api/weather?lat=${latitude}&lon=${longitude}`);
+                const data = await response.json();
+
+                // Update summary view
+                document.getElementById('weather-temp').textContent = `${data.current.temperature}°`;
+                document.getElementById('weather-icon').textContent = data.current.icon;
+                document.getElementById('weather-condition').textContent = data.current.condition;
+                document.getElementById('weather-location').textContent = data.current.location;
+
+                // Apply gradient background based on condition
+                const weatherCard = document.querySelector('.weather');
+                weatherCard.style.background = getGradientForCondition(data.current.condition);
+
+                // Update minute-by-minute forecast on main card
+                const minuteForecastContainer = document.getElementById('minute-forecast-bars');
+                const maxPrecip = Math.max(...data.minuteForecast.map(m => m.precipitation), 0.1); // Avoid division by 0
+                minuteForecastContainer.innerHTML = data.minuteForecast.map(minute => `
+                    <div class="minute-bar" style="height: ${(minute.precipitation / maxPrecip) * 100}%">
+                        <span class="minute-bar-label">${minute.label}</span>
+                    </div>
+                `).join('');
+                document.getElementById('rain-start-message').textContent = data.rainStartMessage;
+
+                // Update 8-hour forecast on main card
+                const hourly8Container = document.getElementById('hourly-forecast-8');
+                hourly8Container.innerHTML = data.hourly8.map(hour => `
+                    <div>
+                        <div>${hour.time}</div>
+                        <div>${hour.conditionIcon}</div>
+                        <div>${hour.temp}°</div>
+                    </div>
+                `).join('');
+
+                // Update modal view
+                document.getElementById('weather-temp-modal').textContent = `${data.current.temperature}°`;
+                document.getElementById('weather-icon-modal').textContent = data.current.icon;
+                document.getElementById('weather-condition-modal').textContent = data.current.condition;
+                document.getElementById('weather-location-modal').textContent = data.current.location;
+
+                // Update minute-by-minute forecast in modal
+                const minuteForecastModalContainer = document.getElementById('minute-forecast-bars-modal');
+                minuteForecastModalContainer.innerHTML = data.minuteForecast.map(minute => `
+                    <div class="minute-bar" style="height: ${(minute.precipitation / maxPrecip) * 100}%">
+                        <span class="minute-bar-label">${minute.label}</span>
+                    </div>
+                `).join('');
+                document.getElementById('rain-start-message-modal').textContent = data.rainStartMessage;
+
+                // Update 10-day forecast in modal
+                const forecastContainer = document.getElementById('weather-forecast');
+                forecastContainer.innerHTML = data.forecast.map((day, index) => `
+                    <div class="forecast-day" onclick="toggleDayDetails(${index})">
+                        <span>${day.dayName}</span>
+                        <span class="weather-icon">${day.conditionIcon}</span>
+                        <div class="temp-bar">
+                            <span class="temp-marker low">${day.lowTemp}°</span>
+                            <span class="temp-marker high">${day.highTemp}°</span>
+                        </div>
+                    </div>
+                    <div class="forecast-details" id="day-details-${index}">
+                        <h3>${day.dayName} Hourly Forecast</h3>
+                        <div class="hourly-forecast">
+                            ${day.hourly.map(hour => `
+                                <div>
+                                    <div>${hour.time}</div>
+                                    <div>${hour.temp}° ${hour.conditionIcon}</div>
+                                    <div>Precip: ${hour.precipitation}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error("Error fetching weather:", error);
+                // Fallback to fake data if the API fails
+                document.getElementById('weather-temp').textContent = "72°";
+                document.getElementById('weather-icon').textContent = "☀️";
+                document.getElementById('weather-condition').textContent = "Sunny";
+                document.getElementById('weather-location').textContent = "Springfield, IL";
+                document.getElementById('rain-start-message').textContent = "No rain in the next hour.";
+                document.getElementById('minute-forecast-bars').innerHTML = '';
+                document.getElementById('hourly-forecast-8').innerHTML = `
+                    <div><div>4PM</div><div>☀️</div><div>72°</div></div>
+                    <div><div>5PM</div><div>☀️</div><div>71°</div></div>
+                    <div><div>6PM</div><div>☁️</div><div>70°</div></div>
+                    <div><div>7PM</div><div>☁️</div><div>69°</div></div>
+                    <div><div>8PM</div><div>🌙</div><div>68°</div></div>
+                    <div><div>9PM</div><div>🌙</div><div>67°</div></div>
+                    <div><div>10PM</div><div>🌙</div><div>66°</div></div>
+                    <div><div>11PM</div><div>🌙</div><div>65°</div></div>
+                `;
+            }
         }
-    } catch (error) {
-        console.error("Error fetching live tracking:", error);
-        document.getElementById('live-tracking-status').textContent = "Error loading vehicles.";
-    }
-}
 
-// Toggle live tracking tile expansion
-function toggleLiveTrackingTile() {
-    const mapElement = document.getElementById('live-tracking-map');
-    mapElement.classList.toggle('expanded');
-    if (mapElement.classList.contains('expanded')) {
-        fetchLiveTracking(); // Refresh map when expanded
-    }
-}
+        // Toggle expandable day details and collapse others
+        function toggleDayDetails(index) {
+            event.stopPropagation(); // Prevent modal from closing
 
-// Show live tracking tile only for admins
-document.addEventListener('DOMContentLoaded', () => {
-    const role = localStorage.getItem('role');
-    if (role === 'Admin') {
-        document.getElementById('live-tracking-tile').style.display = 'block';
-    }
-});
+            // Check if the day has hourly data (only current day and next day have data)
+            const hasHourlyData = index <= 1; // Current day (0) and next day (1)
 
-// Add click event to toggle expansion
-document.getElementById('live-tracking-tile').addEventListener('click', toggleLiveTrackingTile);
+            if (!hasHourlyData) {
+                // Apply bounce effect for days without hourly data
+                const dayElement = document.querySelectorAll('.forecast-day')[index];
+                dayElement.classList.add('bounce');
+                return;
+            }
 
-// Initial fetch of live tracking data
-if (localStorage.getItem('role') === 'Admin') {
-    fetchLiveTracking();
-}
-  </script>
+            // Collapse all other expanded details
+            const allDetails = document.querySelectorAll('.forecast-details');
+            allDetails.forEach((detail, i) => {
+                if (i !== index) {
+                    detail.classList.remove('active');
+                }
+            });
+
+            // Toggle the clicked day's details
+            const details = document.getElementById(`day-details-${index}`);
+            details.classList.toggle('active');
+        }
+
+        // Open the weather modal
+        function openWeatherModal() {
+            document.getElementById('weather-modal').style.display = 'block';
+        }
+
+        // Close the weather modal
+        function closeWeatherModal() {
+            document.getElementById('weather-modal').style.display = 'none';
+        }
+
+        // Get gradient background based on weather condition
+        function getGradientForCondition(condition) {
+            switch (condition.toLowerCase()) {
+                case "clear sky":
+                    return "linear-gradient(135deg, #f7b733, #fc4a1a)"; // Sunny gradient
+                case "few clouds":
+                case "scattered clouds":
+                case "broken clouds":
+                case "overcast clouds":
+                    return "linear-gradient(135deg, #bdc3c7, #2c3e50)"; // Cloudy gradient
+                case "light rain":
+                case "moderate rain":
+                case "heavy rain":
+                case "rain":
+                    return "linear-gradient(135deg, #4b6cb7, #182848)"; // Rainy gradient
+                case "thunderstorm":
+                    return "linear-gradient(135deg, #2c3e50, #4b5e67)"; // Stormy gradient
+                default:
+                    return "linear-gradient(135deg, #bdc3c7, #2c3e50)"; // Default gradient
+            }
+        }
+
+        // Fetch and display live tracking data
+        async function fetchLiveTracking() {
+            try {
+                const response = await fetch('/api/live-tracking');
+                const data = await response.json();
+
+                const statusElement = document.getElementById('live-tracking-status');
+                if (!data.vehicles || data.vehicles.length === 0) {
+                    statusElement.textContent = "No vehicles found.";
+                    return;
+                }
+
+                statusElement.textContent = `${data.vehicles.length} vehicles online`;
+
+                // Initialize Google Map when tile is expanded
+                const mapElement = document.getElementById('live-tracking-map');
+                if (mapElement.classList.contains('expanded')) {
+                    const map = new google.maps.Map(mapElement, {
+                        center: { lat: data.vehicles[0].latitude, lng: data.vehicles[0].longitude },
+                        zoom: 10
+                    });
+
+                    // Add markers for each vehicle
+                    data.vehicles.forEach(vehicle => {
+                        new google.maps.Marker({
+                            position: { lat: vehicle.latitude, lng: vehicle.longitude },
+                            map: map,
+                            title: `${vehicle.name} (${vehicle.status}, ${vehicle.speed} mph)`
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching live tracking:", error);
+                document.getElementById('live-tracking-status').textContent = "Error loading vehicles.";
+            }
+        }
+
+        // Toggle live tracking tile expansion
+        function toggleLiveTrackingTile(event) {
+            event.stopPropagation(); // Prevent any parent click events
+            const mapElement = document.getElementById('live-tracking-map');
+            mapElement.classList.toggle('expanded');
+            if (mapElement.classList.contains('expanded')) {
+                fetchLiveTracking(); // Refresh map when expanded
+            }
+        }
+
+        // Show live tracking tile only for admins
+        window.onload = () => {
+            const role = localStorage.getItem('userRole');
+            if (role === 'Admin') {
+                document.getElementById('live-tracking-tile').style.display = 'block';
+                fetchLiveTracking(); // Initial fetch for admins
+            }
+            fetchWeather(); // Initial fetch for weather
+        };
+
+        // Add click event to toggle expansion
+        document.getElementById('live-tracking-tile').addEventListener('click', toggleLiveTrackingTile);
+    </script>
 </body>
 </html>
