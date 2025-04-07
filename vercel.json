@@ -7,6 +7,10 @@
         {
             "source": "/api/weather",
             "destination": "/api/weather.js"
+        },
+        {
+            "source": "/api/live-tracking",
+            "destination": "/api/live-tracking.js"
         }
     ]
 }

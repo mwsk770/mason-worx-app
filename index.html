@@ -477,7 +477,30 @@
     background-color: #333;
     border-radius: 8px;
 }
+.live-tracking {
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+    border-radius: 16px;
+    padding: 10px;
+}
+.live-tracking:hover {
+    transform: scale(1.02);
+}
+.live-tracking-content {
+    margin-top: 10px;
+}
+#live-tracking-map {
+    width: 100%;
+    background-color: #333;
+    border-radius: 8px;
+}
+#live-tracking-map.expanded {
+    height: 300px;
+}
     </style>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAAWjrhtwCMGuDGntEVvSZ7ng0m_IaWgXw=places"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -557,6 +580,14 @@
     </div>
     <div class="hourly-forecast-8" id="hourly-forecast-8">
         <!-- 8-hour forecast will be populated dynamically -->
+    </div>
+</div>
+
+<div class="dashboard-card live-tracking" id="live-tracking-tile" style="display: none;">
+    <h2>Live Tracking</h2>
+    <div class="live-tracking-content">
+        <p id="live-tracking-status">Loading vehicles...</p>
+        <div id="live-tracking-map" style="height: 0; overflow: hidden; transition: height 0.3s ease;"></div>
     </div>
 </div>
 
@@ -959,6 +990,67 @@ function getGradientForCondition(condition) {
 
 // Call fetchWeather when the page loads
 window.addEventListener('load', fetchWeather);
+// Fetch and display live tracking data
+async function fetchLiveTracking() {
+    try {
+        const response = await fetch('/api/live-tracking');
+        const data = await response.json();
+
+        const statusElement = document.getElementById('live-tracking-status');
+        if (data.vehicles.length === 0) {
+            statusElement.textContent = "No vehicles found.";
+            return;
+        }
+
+        statusElement.textContent = `${data.vehicles.length} vehicles online`;
+
+        // Initialize Google Map when tile is expanded
+        const mapElement = document.getElementById('live-tracking-map');
+        if (mapElement.classList.contains('expanded')) {
+            const map = new google.maps.Map(mapElement, {
+                center: { lat: data.vehicles[0].latitude, lng: data.vehicles[0].longitude },
+                zoom: 10
+            });
+
+            // Add markers for each vehicle
+            data.vehicles.forEach(vehicle => {
+                new google.maps.Marker({
+                    position: { lat: vehicle.latitude, lng: vehicle.longitude },
+                    map: map,
+                    title: `${vehicle.name} (${vehicle.status}, ${vehicle.speed} mph)`
+                });
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching live tracking:", error);
+        document.getElementById('live-tracking-status').textContent = "Error loading vehicles.";
+    }
+}
+
+// Toggle live tracking tile expansion
+function toggleLiveTrackingTile() {
+    const mapElement = document.getElementById('live-tracking-map');
+    mapElement.classList.toggle('expanded');
+    if (mapElement.classList.contains('expanded')) {
+        fetchLiveTracking(); // Refresh map when expanded
+    }
+}
+
+// Show live tracking tile only for admins
+document.addEventListener('DOMContentLoaded', () => {
+    const role = localStorage.getItem('role');
+    if (role === 'Admin') {
+        document.getElementById('live-tracking-tile').style.display = 'block';
+    }
+});
+
+// Add click event to toggle expansion
+document.getElementById('live-tracking-tile').addEventListener('click', toggleLiveTrackingTile);
+
+// Initial fetch of live tracking data
+if (localStorage.getItem('role') === 'Admin') {
+    fetchLiveTracking();
+}
   </script>
 </body>
 </html>
