@@ -493,74 +493,75 @@
 
         // Job intake submission
         async function submitJob(event) {
-            event.preventDefault();
-            const address = document.getElementById('address').value;
-            const client = document.getElementById('client').value;
-            const pocName = document.getElementById('pocName').value || 'N/A';
-            const pocPhone = document.getElementById('pocPhone').value || 'N/A';
-            const pocEmail = document.getElementById('pocEmail').value || 'N/A';
-            const jobType = document.getElementById('jobType').value;
-            const files = document.getElementById('plans').files;
-            const fileNames = files.length ? Array.from(files).map(f => f.name).join(', ') : 'None';
+    event.preventDefault();
+    const address = document.getElementById('address').value;
+    const client = document.getElementById('client').value;
+    const pocName = document.getElementById('pocName').value || 'N/A';
+    const pocPhone = document.getElementById('pocPhone').value || 'N/A';
+    const pocEmail = document.getElementById('pocEmail').value || 'N/A';
+    const jobType = document.getElementById('jobType').value;
+    const files = document.getElementById('plans').files;
 
-            // Prepare job data
-            const jobData = {
-                address: address,
-                client: client,
-                pocName: pocName,
-                pocPhone: pocPhone,
-                pocEmail: pocEmail,
-                jobType: jobType,
-                files: fileNames
-            };
-
-            // Update preview
-            document.getElementById('previewAddress').textContent = address;
-            document.getElementById('previewClient').textContent = client;
-            document.getElementById('previewPoc').textContent = `${pocName} (${pocPhone}, ${pocEmail})`;
-            document.getElementById('previewJobType').textContent = jobType;
-            document.getElementById('previewFiles').textContent = fileNames;
-            document.getElementById('jobPreview').classList.add('active');
-
-            // Send to Google Apps Script
-            const scriptUrl = "/api/proxy";
-            try {
-                console.log("Submitting job data:", jobData);
-                console.log("Sending request to:", scriptUrl);
-                const response = await fetch(scriptUrl, {
-                    method: 'POST',
-                    body: JSON.stringify(jobData),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                console.log("Response status:", response.status);
-                const result = await response.json();
-                console.log("Response result:", result);
-                if (result.status === "success") {
-                    alert(`Job submitted: ${result.jobNumber} - ${client} at ${address}`);
-                } else {
-                    alert(`Error: ${result.message}`);
-                }
-            } catch (error) {
-                console.error("Fetch error:", error);
-                alert(`Error submitting job: ${error.message}`);
-            }
-
-            document.getElementById('jobForm').reset();
-        }
-
-        // Calendar events
-        document.querySelectorAll('.calendar .days div').forEach(day => {
-            day.addEventListener('click', () => {
-                if (!day.textContent) return;
-                const event = prompt(`Add event for day ${day.textContent}:`);
-                if (event) {
-                    day.classList.add('event');
-                    day.title = event;
-                }
-            });
+    // Prepare file data (if a file is selected)
+    let fileData = null;
+    let fileName = "None";
+    if (files.length > 0) {
+        const file = files[0];
+        fileName = file.name;
+        fileData = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]); // Get base64 data (remove "data:image/jpeg;base64," prefix)
+            reader.readAsDataURL(file);
         });
+    }
+
+    // Prepare job data
+    const jobData = {
+        address: address,
+        client: client,
+        pocName: pocName,
+        pocPhone: pocPhone,
+        pocEmail: pocEmail,
+        jobType: jobType,
+        fileName: fileName,
+        fileData: fileData
+    };
+
+    // Update preview
+    document.getElementById('previewAddress').textContent = address;
+    document.getElementById('previewClient').textContent = client;
+    document.getElementById('previewPoc').textContent = `${pocName} (${pocPhone}, ${pocEmail})`;
+    document.getElementById('previewJobType').textContent = jobType;
+    document.getElementById('previewFiles').textContent = fileName;
+    document.getElementById('jobPreview').classList.add('active');
+
+    // Send to Google Apps Script via proxy
+    const scriptUrl = "/api/proxy";
+    try {
+        console.log("Submitting job data:", jobData);
+        console.log("Sending request to:", scriptUrl);
+        const response = await fetch(scriptUrl, {
+            method: 'POST',
+            body: JSON.stringify(jobData),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log("Response status:", response.status);
+        const result = await response.json();
+        console.log("Response result:", result);
+        if (result.status === "success") {
+            alert(`Job submitted: ${result.jobNumber} - ${client} at ${address}`);
+        } else {
+            alert(`Error: ${result.message}`);
+        }
+    } catch (error) {
+        console.error("Fetch error:", error);
+        alert(`Error submitting job: ${error.message}`);
+    }
+
+    document.getElementById('jobForm').reset();
+}
 
         // Send message
         function sendMessage() {
