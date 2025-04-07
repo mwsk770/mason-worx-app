@@ -294,6 +294,8 @@
     position: relative;
     overflow: hidden;
     transition: transform 0.2s;
+    border-radius: 16px;
+    padding: 10px;
 }
 .weather:hover {
     transform: scale(1.02);
@@ -302,7 +304,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px;
+    padding: 5px;
 }
 .weather-icon {
     font-size: 2rem;
@@ -321,6 +323,48 @@
 }
 .refresh-icon:hover {
     color: #e08e0b;
+}
+.minute-forecast {
+    margin: 10px 0;
+}
+.minute-forecast p {
+    font-size: 0.9rem;
+    color: #999;
+    margin-bottom: 5px;
+}
+.minute-forecast-bars {
+    display: flex;
+    align-items: flex-end;
+    height: 40px;
+    overflow-x: auto;
+    position: relative;
+}
+.minute-bar {
+    flex: 1;
+    min-width: 10px;
+    background-color: #4b6cb7;
+    opacity: 0.6;
+    position: relative;
+    margin-right: 2px;
+}
+.minute-bar-label {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: #999;
+}
+.hourly-forecast-8 {
+    display: flex;
+    overflow-x: auto;
+    margin-top: 10px;
+    padding-bottom: 5px;
+}
+.hourly-forecast-8 div {
+    text-align: center;
+    min-width: 60px;
+    margin-right: 10px;
 }
 .weather-modal {
     display: none;
@@ -363,33 +407,39 @@
     font-size: 3rem;
     margin-right: 15px;
 }
-.minute-forecast {
-    margin: 20px 0;
-}
-.minute-forecast-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-    gap: 5px;
-    max-height: 100px;
-    overflow-x: auto;
-    padding-bottom: 5px;
-}
-.minute-forecast-grid div {
-    text-align: center;
-    padding: 5px;
-    background-color: #333;
-    border-radius: 8px;
-    font-size: 0.8rem;
-}
 .forecast-day {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #333;
     cursor: pointer;
-    padding: 5px 0;
+}
+.forecast-day:last-child {
+    border-bottom: none;
 }
 .forecast-day:hover {
     background-color: #333;
+}
+.temp-bar {
+    flex-grow: 1;
+    height: 8px;
+    background: linear-gradient(to right, #4b6cb7, #f7b733);
+    border-radius: 4px;
+    position: relative;
+    margin: 0 10px;
+}
+.temp-marker {
+    position: absolute;
+    top: -20px;
+    font-size: 0.8rem;
+    color: #999;
+}
+.temp-marker.low {
+    left: 0;
+}
+.temp-marker.high {
+    right: 0;
 }
 .forecast-details {
     display: none;
@@ -402,13 +452,14 @@
     display: block;
 }
 .hourly-forecast {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    display: flex;
+    overflow-x: auto;
     gap: 10px;
-    margin-top: 10px;
+    padding-bottom: 10px;
 }
 .hourly-forecast div {
     text-align: center;
+    min-width: 80px;
     padding: 5px;
     background-color: #333;
     border-radius: 8px;
@@ -485,12 +536,21 @@
         </div>
         <span class="refresh-icon" onclick="fetchWeather(event)">⟳</span>
     </div>
+    <div class="minute-forecast" id="minute-forecast">
+        <p id="rain-start-message"></p>
+        <div class="minute-forecast-bars" id="minute-forecast-bars">
+            <!-- Minute-by-minute forecast bars will be populated dynamically -->
+        </div>
+    </div>
+    <div class="hourly-forecast-8" id="hourly-forecast-8">
+        <!-- 8-hour forecast will be populated dynamically -->
+    </div>
 </div>
 
 <!-- Weather Modal -->
 <div class="weather-modal" id="weather-modal">
     <div class="weather-modal-content">
-        <span class="close-modal" onclick="closeWeatherModal()">&times;</span>
+        <span class="close-modal" onclick="closeWeatherModal()">×</span>
         <h2>Weather Details</h2>
         <div class="weather-current-detailed">
             <span class="weather-icon-large" id="weather-icon-modal"></span>
@@ -499,16 +559,18 @@
                 <span id="weather-condition-modal"></span>, <span id="weather-location-modal"></span>
             </div>
         </div>
-        <div class="minute-forecast" id="minute-forecast">
+        <div class="minute-forecast" id="minute-forecast-modal">
             <h3>Next Hour Precipitation</h3>
-            <div class="minute-forecast-grid" id="minute-forecast-grid">
-                <!-- Minute-by-minute forecast will be populated dynamically -->
+            <p id="rain-start-message-modal"></p>
+            <div class="minute-forecast-bars" id="minute-forecast-bars-modal">
+                <!-- Minute-by-minute forecast bars will be populated dynamically -->
             </div>
         </div>
         <div class="weather-forecast" id="weather-forecast">
-            <!-- Forecast will be populated dynamically -->
+            <!-- 10-day forecast will be populated dynamically -->
         </div>
     </div>
+</div>
 </div>                <div class="dashboard-card tasks">
                     <h2>Tasks</h2>
                     <ul>
@@ -717,7 +779,6 @@
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
-
 // Fetch and display real weather data
 async function fetchWeather(event) {
     if (event) event.stopPropagation(); // Prevent modal from opening when clicking refresh
@@ -743,27 +804,51 @@ async function fetchWeather(event) {
         const weatherCard = document.querySelector('.weather');
         weatherCard.style.background = getGradientForCondition(data.current.condition);
 
+        // Update minute-by-minute forecast on main card
+        const minuteForecastContainer = document.getElementById('minute-forecast-bars');
+        const maxPrecip = Math.max(...data.minuteForecast.map(m => m.precipitation), 0.1); // Avoid division by 0
+        minuteForecastContainer.innerHTML = data.minuteForecast.map(minute => `
+            <div class="minute-bar" style="height: ${(minute.precipitation / maxPrecip) * 100}%">
+                <span class="minute-bar-label">${minute.label}</span>
+            </div>
+        `).join('');
+        document.getElementById('rain-start-message').textContent = data.rainStartMessage;
+
+        // Update 8-hour forecast on main card
+        const hourly8Container = document.getElementById('hourly-forecast-8');
+        hourly8Container.innerHTML = data.hourly8.map(hour => `
+            <div>
+                <div>${hour.time}</div>
+                <div>${hour.conditionIcon}</div>
+                <div>${hour.temp}°</div>
+            </div>
+        `).join('');
+
         // Update modal view
         document.getElementById('weather-temp-modal').textContent = `${data.current.temperature}°`;
         document.getElementById('weather-icon-modal').textContent = data.current.icon;
         document.getElementById('weather-condition-modal').textContent = data.current.condition;
         document.getElementById('weather-location-modal').textContent = data.current.location;
 
-        // Update minute-by-minute forecast
-        const minuteForecastContainer = document.getElementById('minute-forecast-grid');
-        minuteForecastContainer.innerHTML = data.minuteForecast.map(minute => `
-            <div>
-                <div>${minute.time}</div>
-                <div>Precip: ${minute.precipitation} mm/hr</div>
+        // Update minute-by-minute forecast in modal
+        const minuteForecastModalContainer = document.getElementById('minute-forecast-bars-modal');
+        minuteForecastModalContainer.innerHTML = data.minuteForecast.map(minute => `
+            <div class="minute-bar" style="height: ${(minute.precipitation / maxPrecip) * 100}%">
+                <span class="minute-bar-label">${minute.label}</span>
             </div>
         `).join('');
+        document.getElementById('rain-start-message-modal').textContent = data.rainStartMessage;
 
-        // Update 7-day forecast with expandable details
+        // Update 10-day forecast in modal
         const forecastContainer = document.getElementById('weather-forecast');
         forecastContainer.innerHTML = data.forecast.map((day, index) => `
             <div class="forecast-day" onclick="toggleDayDetails(${index})">
-                <span>${day.dayName} ${day.highTemp}°/${day.lowTemp}° ${day.conditionIcon}</span>
-                <span>▼</span>
+                <span>${day.dayName}</span>
+                <span class="weather-icon">${day.conditionIcon}</span>
+                <div class="temp-bar">
+                    <span class="temp-marker low">${day.lowTemp}°</span>
+                    <span class="temp-marker high">${day.highTemp}°</span>
+                </div>
             </div>
             <div class="forecast-details" id="day-details-${index}">
                 <h3>${day.dayName} Hourly Forecast</h3>
@@ -785,15 +870,17 @@ async function fetchWeather(event) {
         document.getElementById('weather-icon').textContent = "☀️";
         document.getElementById('weather-condition').textContent = "Sunny";
         document.getElementById('weather-location').textContent = "Springfield, IL";
-        document.getElementById('minute-forecast-grid').innerHTML = `<p>Minute-by-minute forecast unavailable.</p>`;
-        document.getElementById('weather-forecast').innerHTML = `
-            <div class="forecast-day">Mon 70°/60° ☀️</div>
-            <div class="forecast-day">Tue 68°/58° 🌧️</div>
-            <div class="forecast-day">Wed 72°/62° ☀️</div>
-            <div class="forecast-day">Thu 65°/55° 🌧️</div>
-            <div class="forecast-day">Fri 70°/60° ☁️</div>
-            <div class="forecast-day">Sat 73°/63° ☀️</div>
-            <div class="forecast-day">Sun 71°/61° ☁️</div>
+        document.getElementById('rain-start-message').textContent = "No rain in the next hour.";
+        document.getElementById('minute-forecast-bars').innerHTML = '';
+        document.getElementById('hourly-forecast-8').innerHTML = `
+            <div><div>4PM</div><div>☀️</div><div>72°</div></div>
+            <div><div>5PM</div><div>☀️</div><div>71°</div></div>
+            <div><div>6PM</div><div>☁️</div><div>70°</div></div>
+            <div><div>7PM</div><div>☁️</div><div>69°</div></div>
+            <div><div>8PM</div><div>🌙</div><div>68°</div></div>
+            <div><div>9PM</div><div>🌙</div><div>67°</div></div>
+            <div><div>10PM</div><div>🌙</div><div>66°</div></div>
+            <div><div>11PM</div><div>🌙</div><div>65°</div></div>
         `;
     }
 }
@@ -838,6 +925,7 @@ function getGradientForCondition(condition) {
 }
 
 // Call fetchWeather when the page loads
-window.addEventListener('load', fetchWeather);  </script>
+window.addEventListener('load', fetchWeather);
+  </script>
 </body>
 </html>

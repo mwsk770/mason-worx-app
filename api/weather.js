@@ -14,12 +14,12 @@ module.exports = async (req, res) => {
         const currentWeatherResponse = await fetch(currentWeatherUrl);
         const currentWeatherData = await currentWeatherResponse.json();
 
-        // Fetch 7-day daily forecast
-        const dailyForecastUrl = `https://api.weatherbit.io/v2.0/forecast/daily?lat=${lat}&lon=${lon}&key=${apiKey}&units=I&days=7`;
+        // Fetch 10-day daily forecast
+        const dailyForecastUrl = `https://api.weatherbit.io/v2.0/forecast/daily?lat=${lat}&lon=${lon}&key=${apiKey}&units=I&days=10`;
         const dailyForecastResponse = await fetch(dailyForecastUrl);
         const dailyForecastData = await dailyForecastResponse.json();
 
-        // Fetch hourly forecast (24 hours)
+        // Fetch 24-hour hourly forecast
         const hourlyForecastUrl = `https://api.weatherbit.io/v2.0/forecast/hourly?lat=${lat}&lon=${lon}&key=${apiKey}&units=I&hours=24`;
         const hourlyForecastResponse = await fetch(hourlyForecastUrl);
         const hourlyForecastData = await hourlyForecastResponse.json();
@@ -35,17 +35,25 @@ module.exports = async (req, res) => {
         const conditionIcon = mapConditionToIcon(condition);
         const location = currentWeatherData.data[0].city_name + ", " + currentWeatherData.data[0].state_code;
 
-        // Format 7-day forecast with hourly data for each day
+        // Format 8-hour hourly forecast for the main card
+        const hourly8 = hourlyForecastData.data.slice(0, 8).map(hour => ({
+            time: new Date(hour.timestamp_local).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }),
+            temp: Math.round(hour.temp),
+            condition: hour.weather.description,
+            conditionIcon: mapConditionToIcon(hour.weather.description)
+        }));
+
+        // Format 10-day forecast with full 24-hour data for each day
         const forecastDaily = dailyForecastData.data;
         const forecast = forecastDaily.map((day, index) => {
             const date = new Date(day.datetime);
-            const dayName = date.toLocaleString('en-US', { weekday: 'short' });
+            const dayName = index === 0 ? "Today" : date.toLocaleString('en-US', { weekday: 'short' });
             const highTemp = Math.round(day.max_temp);
             const lowTemp = Math.round(day.min_temp);
             const condition = day.weather.description;
             const conditionIcon = mapConditionToIcon(condition);
 
-            // Get hourly forecast for this day (filter from the 24-hour data)
+            // Get full 24-hour forecast for this day
             const hourly = hourlyForecastData.data
                 .filter(hour => new Date(hour.timestamp_local).toLocaleDateString() === date.toLocaleDateString())
                 .map(hour => ({
@@ -68,12 +76,23 @@ module.exports = async (req, res) => {
 
         // Format minute-by-minute precipitation forecast (60 minutes)
         const minuteForecast = minuteForecastData.data.slice(0, 60).map((entry, index) => {
-            const time = new Date(entry.timestamp_local).toLocaleTimeString('en-US', { minute: '2-digit' });
+            const time = new Date(entry.timestamp_local);
+            const minutes = time.getMinutes();
+            const label = index === 0 ? "Now" : `${minutes}m`;
             return {
-                time: time,
+                label: label,
                 precipitation: entry.precip // Precipitation in mm/hr
             };
         });
+
+        // Calculate "Rain starting in X min" message
+        let rainStartMessage = null;
+        for (let i = 0; i < minuteForecast.length; i++) {
+            if (minuteForecast[i].precipitation > 0) {
+                rainStartMessage = `Rain starting in ${i} min.`;
+                break;
+            }
+        }
 
         res.status(200).json({
             current: {
@@ -82,8 +101,10 @@ module.exports = async (req, res) => {
                 icon: conditionIcon,
                 location: location
             },
+            hourly8: hourly8,
             forecast: forecast,
-            minuteForecast: minuteForecast
+            minuteForecast: minuteForecast,
+            rainStartMessage: rainStartMessage || "No rain in the next hour."
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
