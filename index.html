@@ -885,9 +885,19 @@ async function fetchWeather(event) {
     }
 }
 
-// Toggle expandable day details
+// Toggle expandable day details and collapse others
 function toggleDayDetails(index) {
     event.stopPropagation(); // Prevent modal from closing
+
+    // Collapse all other expanded details
+    const allDetails = document.querySelectorAll('.forecast-details');
+    allDetails.forEach((detail, i) => {
+        if (i !== index) {
+            detail.classList.remove('active');
+        }
+    });
+
+    // Toggle the clicked day's details
     const details = document.getElementById(`day-details-${index}`);
     details.classList.toggle('active');
 }
