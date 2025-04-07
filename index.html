@@ -289,11 +289,87 @@
                 gap: 10px;
             }
         }
+.weather {
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+.weather:hover {
+    transform: scale(1.02);
+}
+.weather-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+}
+.weather-icon {
+    font-size: 2rem;
+    margin-right: 10px;
+}
+.weather-info {
+    flex-grow: 1;
+}
+.weather-info strong {
+    font-size: 1.5rem;
+}
+.refresh-icon {
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #f39c12;
+}
+.refresh-icon:hover {
+    color: #e08e0b;
+}
+.weather-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    overflow-y: auto;
+}
+.weather-modal-content {
+    background-color: #1a1a1a;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 2rem;
+    color: #f39c12;
+    cursor: pointer;
+}
+.close-modal:hover {
+    color: #e08e0b;
+}
+.weather-current-detailed {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.weather-icon-large {
+    font-size: 3rem;
+    margin-right: 15px;
+}
+.minute-forecast {
+    margin: 20px 0;
+}
 .minute-forecast-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
     gap: 5px;
-    margin-top: 10px;
     max-height: 100px;
     overflow-x: auto;
     padding-bottom: 5px;
@@ -304,6 +380,38 @@
     background-color: #333;
     border-radius: 8px;
     font-size: 0.8rem;
+}
+.forecast-day {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 5px 0;
+}
+.forecast-day:hover {
+    background-color: #333;
+}
+.forecast-details {
+    display: none;
+    padding: 10px;
+    background-color: #2c2c2c;
+    border-radius: 8px;
+    margin-top: 5px;
+}
+.forecast-details.active {
+    display: block;
+}
+.hourly-forecast {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+.hourly-forecast div {
+    text-align: center;
+    padding: 5px;
+    background-color: #333;
+    border-radius: 8px;
 }
     </style>
 </head>
@@ -368,26 +476,40 @@
                     <p><strong>MW497</strong><br>125 Main St, Somewhere, NY</p>
                     <p><strong>MW515</strong><br>458 Oak Ave, Another Town, NJ</p>
                 </div>
-<div class="dashboard-card weather">
-    <h2>Weather <span class="refresh-icon" onclick="fetchWeather()">⟳</span></h2>
-    <div class="weather-current">
-        <span class="icon" id="weather-icon"></span>
-        <div>
-            <strong id="weather-temp"></strong><br>
+<div class="dashboard-card weather" onclick="openWeatherModal()">
+    <div class="weather-summary">
+        <span class="weather-icon" id="weather-icon"></span>
+        <div class="weather-info">
+            <strong id="weather-temp"></strong>
             <span id="weather-condition"></span>, <span id="weather-location"></span>
         </div>
-    </div>
-    <div class="minute-forecast" id="minute-forecast">
-        <h3>Next Hour Precipitation</h3>
-        <div class="minute-forecast-grid" id="minute-forecast-grid">
-            <!-- Minute-by-minute forecast will be populated dynamically -->
-        </div>
-    </div>
-    <div class="weather-forecast" id="weather-forecast">
-        <!-- Forecast will be populated dynamically -->
+        <span class="refresh-icon" onclick="fetchWeather(event)">⟳</span>
     </div>
 </div>
-                <div class="dashboard-card tasks">
+
+<!-- Weather Modal -->
+<div class="weather-modal" id="weather-modal">
+    <div class="weather-modal-content">
+        <span class="close-modal" onclick="closeWeatherModal()">&times;</span>
+        <h2>Weather Details</h2>
+        <div class="weather-current-detailed">
+            <span class="weather-icon-large" id="weather-icon-modal"></span>
+            <div>
+                <strong id="weather-temp-modal"></strong><br>
+                <span id="weather-condition-modal"></span>, <span id="weather-location-modal"></span>
+            </div>
+        </div>
+        <div class="minute-forecast" id="minute-forecast">
+            <h3>Next Hour Precipitation</h3>
+            <div class="minute-forecast-grid" id="minute-forecast-grid">
+                <!-- Minute-by-minute forecast will be populated dynamically -->
+            </div>
+        </div>
+        <div class="weather-forecast" id="weather-forecast">
+            <!-- Forecast will be populated dynamically -->
+        </div>
+    </div>
+</div>                <div class="dashboard-card tasks">
                     <h2>Tasks</h2>
                     <ul>
                         <li><input type="checkbox"> Review estimate for MW515</li>
@@ -596,8 +718,9 @@
             if (e.key === 'Enter') sendMessage();
         });
 
- // Fetch and display real weather data
-async function fetchWeather() {
+// Fetch and display real weather data
+async function fetchWeather(event) {
+    if (event) event.stopPropagation(); // Prevent modal from opening when clicking refresh
     try {
         // Get the user's location
         const position = await new Promise((resolve, reject) => {
@@ -610,11 +733,21 @@ async function fetchWeather() {
         const response = await fetch(`/api/weather?lat=${latitude}&lon=${longitude}`);
         const data = await response.json();
 
-        // Update current weather
+        // Update summary view
         document.getElementById('weather-temp').textContent = `${data.current.temperature}°`;
         document.getElementById('weather-icon').textContent = data.current.icon;
         document.getElementById('weather-condition').textContent = data.current.condition;
         document.getElementById('weather-location').textContent = data.current.location;
+
+        // Apply gradient background based on condition
+        const weatherCard = document.querySelector('.weather');
+        weatherCard.style.background = getGradientForCondition(data.current.condition);
+
+        // Update modal view
+        document.getElementById('weather-temp-modal').textContent = `${data.current.temperature}°`;
+        document.getElementById('weather-icon-modal').textContent = data.current.icon;
+        document.getElementById('weather-condition-modal').textContent = data.current.condition;
+        document.getElementById('weather-location-modal').textContent = data.current.location;
 
         // Update minute-by-minute forecast
         const minuteForecastContainer = document.getElementById('minute-forecast-grid');
@@ -667,12 +800,44 @@ async function fetchWeather() {
 
 // Toggle expandable day details
 function toggleDayDetails(index) {
+    event.stopPropagation(); // Prevent modal from closing
     const details = document.getElementById(`day-details-${index}`);
     details.classList.toggle('active');
 }
 
+// Open the weather modal
+function openWeatherModal() {
+    document.getElementById('weather-modal').style.display = 'block';
+}
+
+// Close the weather modal
+function closeWeatherModal() {
+    document.getElementById('weather-modal').style.display = 'none';
+}
+
+// Get gradient background based on weather condition
+function getGradientForCondition(condition) {
+    switch (condition.toLowerCase()) {
+        case "clear sky":
+            return "linear-gradient(135deg, #f7b733, #fc4a1a)"; // Sunny gradient
+        case "few clouds":
+        case "scattered clouds":
+        case "broken clouds":
+        case "overcast clouds":
+            return "linear-gradient(135deg, #bdc3c7, #2c3e50)"; // Cloudy gradient
+        case "light rain":
+        case "moderate rain":
+        case "heavy rain":
+        case "rain":
+            return "linear-gradient(135deg, #4b6cb7, #182848)"; // Rainy gradient
+        case "thunderstorm":
+            return "linear-gradient(135deg, #2c3e50, #4b5e67)"; // Stormy gradient
+        default:
+            return "linear-gradient(135deg, #bdc3c7, #2c3e50)"; // Default gradient
+    }
+}
+
 // Call fetchWeather when the page loads
-window.addEventListener('load', fetchWeather);
-  </script>
+window.addEventListener('load', fetchWeather);  </script>
 </body>
 </html>
