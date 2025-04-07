@@ -289,6 +289,22 @@
                 gap: 10px;
             }
         }
+.minute-forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    gap: 5px;
+    margin-top: 10px;
+    max-height: 100px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
+.minute-forecast-grid div {
+    text-align: center;
+    padding: 5px;
+    background-color: #333;
+    border-radius: 8px;
+    font-size: 0.8rem;
+}
     </style>
 </head>
 <body>
@@ -353,12 +369,18 @@
                     <p><strong>MW515</strong><br>458 Oak Ave, Another Town, NJ</p>
                 </div>
 <div class="dashboard-card weather">
-    <h2>Weather</h2>
+    <h2>Weather <span class="refresh-icon" onclick="fetchWeather()">⟳</span></h2>
     <div class="weather-current">
         <span class="icon" id="weather-icon"></span>
         <div>
             <strong id="weather-temp"></strong><br>
             <span id="weather-condition"></span>, <span id="weather-location"></span>
+        </div>
+    </div>
+    <div class="minute-forecast" id="minute-forecast">
+        <h3>Next Hour Precipitation</h3>
+        <div class="minute-forecast-grid" id="minute-forecast-grid">
+            <!-- Minute-by-minute forecast will be populated dynamically -->
         </div>
     </div>
     <div class="weather-forecast" id="weather-forecast">
@@ -574,10 +596,18 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-  // Fetch and display real weather data
+ // Fetch and display real weather data
 async function fetchWeather() {
     try {
-        const response = await fetch(`/api/weather`);
+        // Get the user's location
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        // Fetch weather data
+        const response = await fetch(`/api/weather?lat=${latitude}&lon=${longitude}`);
         const data = await response.json();
 
         // Update current weather
@@ -586,9 +616,35 @@ async function fetchWeather() {
         document.getElementById('weather-condition').textContent = data.current.condition;
         document.getElementById('weather-location').textContent = data.current.location;
 
-        // Update 7-day forecast
+        // Update minute-by-minute forecast
+        const minuteForecastContainer = document.getElementById('minute-forecast-grid');
+        minuteForecastContainer.innerHTML = data.minuteForecast.map(minute => `
+            <div>
+                <div>${minute.time}</div>
+                <div>Precip: ${minute.precipitation} mm/hr</div>
+            </div>
+        `).join('');
+
+        // Update 7-day forecast with expandable details
         const forecastContainer = document.getElementById('weather-forecast');
-        forecastContainer.innerHTML = data.forecast.map(day => `<div>${day}</div>`).join('');
+        forecastContainer.innerHTML = data.forecast.map((day, index) => `
+            <div class="forecast-day" onclick="toggleDayDetails(${index})">
+                <span>${day.dayName} ${day.highTemp}°/${day.lowTemp}° ${day.conditionIcon}</span>
+                <span>▼</span>
+            </div>
+            <div class="forecast-details" id="day-details-${index}">
+                <h3>${day.dayName} Hourly Forecast</h3>
+                <div class="hourly-forecast">
+                    ${day.hourly.map(hour => `
+                        <div>
+                            <div>${hour.time}</div>
+                            <div>${hour.temp}° ${hour.conditionIcon}</div>
+                            <div>Precip: ${hour.precipitation}%</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
     } catch (error) {
         console.error("Error fetching weather:", error);
         // Fallback to fake data if the API fails
@@ -596,16 +652,23 @@ async function fetchWeather() {
         document.getElementById('weather-icon').textContent = "☀️";
         document.getElementById('weather-condition').textContent = "Sunny";
         document.getElementById('weather-location').textContent = "Springfield, IL";
+        document.getElementById('minute-forecast-grid').innerHTML = `<p>Minute-by-minute forecast unavailable.</p>`;
         document.getElementById('weather-forecast').innerHTML = `
-            <div>Mon 70° ☀️</div>
-            <div>Tue 68° 🌧️</div>
-            <div>Wed 72° ☀️</div>
-            <div>Thu 65° 🌧️</div>
-            <div>Fri 70° ☁️</div>
-            <div>Sat 73° ☀️</div>
-            <div>Sun 71° ☁️</div>
+            <div class="forecast-day">Mon 70°/60° ☀️</div>
+            <div class="forecast-day">Tue 68°/58° 🌧️</div>
+            <div class="forecast-day">Wed 72°/62° ☀️</div>
+            <div class="forecast-day">Thu 65°/55° 🌧️</div>
+            <div class="forecast-day">Fri 70°/60° ☁️</div>
+            <div class="forecast-day">Sat 73°/63° ☀️</div>
+            <div class="forecast-day">Sun 71°/61° ☁️</div>
         `;
     }
+}
+
+// Toggle expandable day details
+function toggleDayDetails(index) {
+    const details = document.getElementById(`day-details-${index}`);
+    details.classList.toggle('active');
 }
 
 // Call fetchWeather when the page loads
