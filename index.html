@@ -352,37 +352,19 @@
                     <p><strong>MW497</strong><br>125 Main St, Somewhere, NY</p>
                     <p><strong>MW515</strong><br>458 Oak Ave, Another Town, NJ</p>
                 </div>
-                <div class="dashboard-card weather">
-                    <h2>Weather</h2>
-                    <div class="weather-current">
-                        <span class="icon">☀️</span>
-                        <div>
-                            <strong>72°</strong><br>Sunny, Springfield, IL
-                        </div>
-                    </div>
-                    <div class="weather-forecast">
-                        <div>Mon<br>70° ☀️</div>
-                        <div>Tue<br>68° 🌧️</div>
-                        <div>Wed<br>72° ☀️</div>
-                        <div>Thu<br>65° 🌧️</div>
-                        <div>Fri<br>70° ☁️</div>
-                        <div>Sat<br>73° ☀️</div>
-                        <div>Sun<br>71° ☁️</div>
-                    </div>
-                </div>
-                <div class="dashboard-card calendar">
-                    <h2>Calendar</h2>
-                    <div class="days-header">
-                        <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
-                    </div>
-                    <div class="days">
-                        <div></div><div></div><div></div><div>1</div><div>2</div><div>3</div><div>4</div>
-                        <div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div><div>11</div>
-                        <div>12</div><div>13</div><div>14</div><div>15</div><div>16</div><div>17</div><div>18</div>
-                        <div>19</div><div>20</div><div class="event" title="Site visit">21</div><div>22</div><div>23</div><div>24</div><div>25</div>
-                        <div>26</div><div>27</div><div>28</div><div>29</div><div>30</div><div></div><div></div>
-                    </div>
-                </div>
+<div class="dashboard-card weather">
+    <h2>Weather</h2>
+    <div class="weather-current">
+        <span class="icon" id="weather-icon"></span>
+        <div>
+            <strong id="weather-temp"></strong><br>
+            <span id="weather-condition"></span>, <span id="weather-location"></span>
+        </div>
+    </div>
+    <div class="weather-forecast" id="weather-forecast">
+        <!-- Forecast will be populated dynamically -->
+    </div>
+</div>
                 <div class="dashboard-card tasks">
                     <h2>Tasks</h2>
                     <ul>
@@ -591,6 +573,43 @@
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
-    </script>
+
+  // Fetch and display real weather data
+async function fetchWeather() {
+    try {
+        const response = await fetch(`/api/weather`);
+        const data = await response.json();
+
+        // Update current weather
+        document.getElementById('weather-temp').textContent = `${data.current.temperature}°`;
+        document.getElementById('weather-icon').textContent = data.current.icon;
+        document.getElementById('weather-condition').textContent = data.current.condition;
+        document.getElementById('weather-location').textContent = data.current.location;
+
+        // Update 7-day forecast
+        const forecastContainer = document.getElementById('weather-forecast');
+        forecastContainer.innerHTML = data.forecast.map(day => `<div>${day}</div>`).join('');
+    } catch (error) {
+        console.error("Error fetching weather:", error);
+        // Fallback to fake data if the API fails
+        document.getElementById('weather-temp').textContent = "72°";
+        document.getElementById('weather-icon').textContent = "☀️";
+        document.getElementById('weather-condition').textContent = "Sunny";
+        document.getElementById('weather-location').textContent = "Springfield, IL";
+        document.getElementById('weather-forecast').innerHTML = `
+            <div>Mon 70° ☀️</div>
+            <div>Tue 68° 🌧️</div>
+            <div>Wed 72° ☀️</div>
+            <div>Thu 65° 🌧️</div>
+            <div>Fri 70° ☁️</div>
+            <div>Sat 73° ☀️</div>
+            <div>Sun 71° ☁️</div>
+        `;
+    }
+}
+
+// Call fetchWeather when the page loads
+window.addEventListener('load', fetchWeather);
+  </script>
 </body>
 </html>
