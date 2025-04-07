@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbwJbMStUgwv2tsjXPqOIH8HICy94CPAKFKAACrR3RiDJjCQKStakKBM5iJ4UbQBCEq0gw/exec";
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbyKfrkpLN3kTlYGAmRivhSit4pv6PaM1aa4hb7kRloUanDKHaRBVPTCGN7aRileEHxOtA/exec";
 
     try {
         const response = await fetch(scriptUrl, {
