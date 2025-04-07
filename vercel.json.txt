@@ -1,0 +1,11 @@
+{
+    "rewrites": [
+        {
+            "source": "/api/proxy",
+            "destination": "/api/proxy.js"
+        }
+    ],
+    "dependencies": {
+        "node-fetch": "2.6.1"
+    }
+}

@@ -523,7 +523,7 @@
             document.getElementById('jobPreview').classList.add('active');
 
             // Send to Google Apps Script
-            const scriptUrl = "https://script.google.com/macros/s/AKfycbz1rPvOCygeyviNQBl7klPKZ254Dxqg8_pIhNV-oqvA191xGsPczbSQmNxBhyuhDrGDtw/exec"; // Replace with your Google Apps Script web app URL (e.g., https://script.google.com/macros/s/abc123/exec)
+            const scriptUrl = "/api/proxy";
             try {
                 console.log("Submitting job data:", jobData);
                 console.log("Sending request to:", scriptUrl);
