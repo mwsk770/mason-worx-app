@@ -711,17 +711,32 @@
         }
 
         // Fetch all data from Google Sheet
-        async function fetchSheetData() {
-            try {
-                const response = await fetch('/api/read-sheet');
-                const data = await response.json();
-                users = data.users || [];
-                messages = data.messages || [];
-                tasks = data.tasks || [];
-            } catch (error) {
-                console.error("Error fetching sheet data:", error);
-            }
+async function fetchSheetData() {
+    try {
+        const response = await fetch('/api/read-sheet');
+        const data = await response.json();
+        users = data.users || [];
+        messages = data.messages || [];
+        tasks = data.tasks || [];
+
+        // If no users are found in the sheet, initialize with the admin user
+        if (users.length === 0) {
+            users = [
+                { email: "alex@masonworxnj.com", password: hashPassword("Sendy0841!"), name: "Alex Kantor", role: "Admin", firstLogin: false }
+            ];
+            // Write the admin user to the sheet
+            await writeSheetData('Users', ["alex@masonworxnj.com", hashPassword("Sendy0841!"), "Alex Kantor", "Admin", "false"]);
         }
+    } catch (error) {
+        console.error("Error fetching sheet data:", error);
+        // Fallback to admin user if fetch fails
+        users = [
+            { email: "alex@masonworxnj.com", password: hashPassword("Sendy0841!"), name: "Alex Kantor", role: "Admin", firstLogin: false }
+        ];
+        messages = [];
+        tasks = [];
+    }
+}
 
         // Write data to Google Sheet
         async function writeSheetData(sheet, data) {
