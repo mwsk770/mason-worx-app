@@ -530,16 +530,10 @@
         <!-- Onboarding Section -->
         <div id="onboarding" class="section">
             <h1>Welcome to Mason Worx</h1>
-            <p>Enter your email and password to log in, or select your role to get started:</p>
+            <p>Enter your email and password to log in:</p>
             <input type="email" id="loginEmail" placeholder="Email" required>
             <input type="password" id="loginPassword" placeholder="Password" required>
             <button onclick="login()">Log In</button>
-            <h2>Select Your Role (New Users)</h2>
-            <div class="role-grid">
-                <div class="role-card" onclick="selectRole('Admin')">Admin</div>
-                <div class="role-card" onclick="selectRole('Foreman')">Foreman</div>
-                <div class="role-card" onclick="selectRole('Laborer')">Laborer</div>
-            </div>
         </div>
         <!-- Job Intake Section -->
         <div id="job-intake" class="section">
@@ -702,17 +696,10 @@
         </div>
     </div>
     <script>
-        // In-memory user database (replace with a proper database later)
-        let users = [
-    { email: "alex@masonworxnj.com", password: hashPassword("Sendy0841!"), name: "Alex Kantor", role: "Admin", firstLogin: false }
-];
-
-        // In-memory messages and tasks
+        // Global variables to store data
+        let users = [];
         let messages = [];
-        let tasks = [
-            { description: "Review estimate for MW515", assignee: "admin@example.com" },
-            { description: "Schedule site visit for new client", assignee: "admin@example.com" }
-        ];
+        let tasks = [];
 
         // Simple password hashing (for demo purposes; use a proper library like bcrypt in production)
         function hashPassword(password) {
@@ -723,6 +710,34 @@
             return hashPassword(password) === hashed;
         }
 
+        // Fetch all data from Google Sheet
+        async function fetchSheetData() {
+            try {
+                const response = await fetch('/api/read-sheet');
+                const data = await response.json();
+                users = data.users || [];
+                messages = data.messages || [];
+                tasks = data.tasks || [];
+            } catch (error) {
+                console.error("Error fetching sheet data:", error);
+            }
+        }
+
+        // Write data to Google Sheet
+        async function writeSheetData(sheet, data) {
+            try {
+                await fetch('/api/write-sheet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sheet, data })
+                });
+            } catch (error) {
+                console.error("Error writing to sheet:", error);
+            }
+        }
+
         // Check if user is logged in
         const loggedInUser = localStorage.getItem('loggedInUser');
         const onboardingLink = document.getElementById('onboardingLink');
@@ -730,36 +745,41 @@
         const sections = document.querySelectorAll('.section');
         const navLinks = document.querySelectorAll('.navbar a');
 
-        if (loggedInUser) {
-            const user = users.find(u => u.email === loggedInUser);
-            if (user) {
-                onboardingLink.style.display = 'none';
-                document.getElementById('dashboard').classList.add('active');
-                document.getElementById('dashboardRole').textContent = user.role;
+        window.onload = async () => {
+            await fetchSheetData();
+            if (loggedInUser) {
+                const user = users.find(u => u.email === loggedInUser);
+                if (user) {
+                    onboardingLink.style.display = 'none';
+                    document.getElementById('dashboard').classList.add('active');
+                    document.getElementById('dashboardRole').textContent = user.role;
+                    navLinks.forEach(link => {
+                        if (link.getAttribute('data-section') === 'dashboard') {
+                            link.classList.add('active');
+                        }
+                    });
+                    if (user.role === 'Admin') {
+                        userManagementLink.style.display = 'block';
+                    }
+                    if (user.firstLogin) {
+                        document.getElementById('passwordModal').style.display = 'block';
+                    }
+                    populateChatRecipients();
+                    populateTaskAssignees();
+                    displayMessages();
+                    displayTasks();
+                }
+            } else {
+                document.getElementById('onboarding').classList.add('active');
                 navLinks.forEach(link => {
-                    if (link.getAttribute('data-section') === 'dashboard') {
+                    if (link.getAttribute('data-section') === 'onboarding') {
                         link.classList.add('active');
                     }
                 });
-                if (user.role === 'Admin') {
-                    userManagementLink.style.display = 'block';
-                }
-                if (user.firstLogin) {
-                    document.getElementById('passwordModal').style.display = 'block';
-                }
-                populateChatRecipients();
-                populateTaskAssignees();
-                displayMessages();
-                displayTasks();
             }
-        } else {
-            document.getElementById('onboarding').classList.add('active');
-            navLinks.forEach(link => {
-                if (link.getAttribute('data-section') === 'onboarding') {
-                    link.classList.add('active');
-                }
-            });
-        }
+            fetchWeather();
+            displayUsers();
+        };
 
         // Login function
         function login() {
@@ -796,7 +816,7 @@
         }
 
         // Change password on first login
-        function changePassword() {
+        async function changePassword() {
             const newPassword = document.getElementById('newPassword').value;
             const confirmNewPassword = document.getElementById('confirmNewPassword').value;
             const email = localStorage.getItem('loggedInUser');
@@ -810,6 +830,7 @@
             if (user) {
                 user.password = hashPassword(newPassword);
                 user.firstLogin = false;
+                await writeSheetData('Users', [email, user.password, user.name, user.role, user.firstLogin.toString()]);
                 document.getElementById('passwordModal').style.display = 'none';
                 alert('Password changed successfully.');
             }
@@ -835,43 +856,8 @@
             });
         });
 
-        // Role selection (for initial setup)
-        function selectRole(role) {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            if (!email || !password) {
-                alert('Please enter your email and password to select a role.');
-                return;
-            }
-            const user = users.find(u => u.email === email);
-            if (!user) {
-                alert('User not found. Please log in with an invited email or contact an admin.');
-                return;
-            }
-            user.role = role;
-            localStorage.setItem('loggedInUser', email);
-            alert(`Role assigned: ${role}. Redirecting to Dashboard.`);
-            onboardingLink.style.display = 'none';
-            sections.forEach(section => section.classList.remove('active'));
-            navLinks.forEach(a => a.classList.remove('active'));
-            document.getElementById('dashboard').classList.add('active');
-            document.getElementById('dashboardRole').textContent = role;
-            navLinks.forEach(link => {
-                if (link.getAttribute('data-section') === 'dashboard') {
-                    link.classList.add('active');
-                }
-            });
-            if (role === 'Admin') {
-                userManagementLink.style.display = 'block';
-            }
-            populateChatRecipients();
-            populateTaskAssignees();
-            displayMessages();
-            displayTasks();
-        }
-
         // Add new user
-        function addUser(event) {
+        async function addUser(event) {
             event.preventDefault();
             const name = document.getElementById('newUserName').value;
             const email = document.getElementById('newUserEmail').value;
@@ -883,13 +869,15 @@
                 return;
             }
 
-            users.push({
+            const newUser = {
                 email: email,
                 password: hashPassword(tempPassword),
                 name: name,
                 role: role,
                 firstLogin: true
-            });
+            };
+            users.push(newUser);
+            await writeSheetData('Users', [email, newUser.password, name, role, 'true']);
 
             console.log(`User invited: ${email} with temporary password: ${tempPassword}`);
             alert(`User ${name} (${email}) added successfully with role ${role}. Temporary password: ${tempPassword}`);
@@ -1029,7 +1017,7 @@
             });
         }
 
-        function sendMessage() {
+        async function sendMessage() {
             const recipient = document.getElementById('chatRecipient').value;
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
@@ -1039,13 +1027,15 @@
             }
             const sender = localStorage.getItem('loggedInUser');
             const senderUser = users.find(u => u.email === sender);
-            messages.push({
+            const newMessage = {
                 sender: sender,
                 senderName: senderUser.name,
                 recipient: recipient,
                 message: message,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            });
+            };
+            messages.push(newMessage);
+            await writeSheetData('Messages', [sender, senderUser.name, recipient, message, newMessage.timestamp]);
             input.value = '';
             displayMessages();
         }
@@ -1092,7 +1082,7 @@
             }
         }
 
-        function assignTask() {
+        async function assignTask() {
             const assignee = document.getElementById('taskAssignee').value;
             const description = document.getElementById('taskDescription').value.trim();
             if (!assignee || !description) {
@@ -1103,6 +1093,7 @@
                 description: description,
                 assignee: assignee
             });
+            await writeSheetData('Tasks', [description, assignee]);
             document.getElementById('taskDescription').value = '';
             displayTasks();
         }
@@ -1307,16 +1298,6 @@
         }
 
         document.getElementById('live-tracking-tile').addEventListener('click', toggleLiveTrackingTile);
-
-        window.onload = () => {
-            const role = localStorage.getItem('userRole');
-            if (role === 'Admin') {
-                document.getElementById('live-tracking-tile').style.display = 'block';
-                fetchLiveTracking();
-            }
-            fetchWeather();
-            displayUsers();
-        };
     </script>
 </body>
 </html>
