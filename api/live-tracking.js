@@ -3,16 +3,50 @@ const fetch = require('node-fetch');
 module.exports = async (req, res) => {
     try {
         const apiKey = "YcjaBtI5zKDABM1wOo6a7S-cLUJH0uw8emiHswXcS8w"; // Your OneStepGPS API key
-        const url = `https://track.onestepgps.com/v3/devices?api_key=${apiKey}`; // Updated to fetch devices
 
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`OneStepGPS API responded with status: ${response.status}`);
+        // Step 1: Authenticate to get a token
+        const authUrl = `https://track.onestepgps.com/v3/auth/login`;
+        const authResponse = await fetch(authUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                api_key: apiKey
+                // Add username and password if required by the API
+                // username: "your-username",
+                // password: "your-password"
+            })
+        });
+
+        if (!authResponse.ok) {
+            throw new Error(`OneStepGPS Auth API responded with status: ${authResponse.status}`);
         }
-        const data = await response.json();
 
-        // Log the raw response for debugging
-        console.log("OneStepGPS API response:", data);
+        const authData = await authResponse.json();
+        console.log("OneStepGPS Auth API response:", authData);
+
+        if (!authData.token) {
+            throw new Error("Failed to obtain authentication token from OneStepGPS API");
+        }
+
+        const token = authData.token;
+
+        // Step 2: Fetch device data using the token
+        const devicesUrl = `https://track.onestepgps.com/v3/devices`;
+        const devicesResponse = await fetch(devicesUrl, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!devicesResponse.ok) {
+            throw new Error(`OneStepGPS Devices API responded with status: ${devicesResponse.status}`);
+        }
+
+        const data = await devicesResponse.json();
+        console.log("OneStepGPS Devices API response:", data);
 
         // Check if the response contains device data
         if (!data || !Array.isArray(data)) {
