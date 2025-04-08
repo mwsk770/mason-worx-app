@@ -255,7 +255,7 @@
             padding: 20px;
             border-radius: 16px;
             width: 90%;
-            max-width: 800px; /* Increased width for desktop */
+            max-width: 800px;
             position: relative;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
@@ -403,7 +403,7 @@
         /* Messages */
         .messages ul {
             list-style: none;
-            max-height: 100px;
+            max-height: 200px;
             overflow-y: auto;
         }
         .messages li {
@@ -443,6 +443,41 @@
         }
         .job-preview p {
             margin-bottom: 5px;
+        }
+        /* User Management */
+        .user-management table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .user-management th, .user-management td {
+            padding: 8px;
+            border: 1px solid #444;
+            text-align: left;
+        }
+        .user-management th {
+            background-color: #3a3a3a;
+        }
+        /* Password Change Modal */
+        .password-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .password-modal-content {
+            background-color: #1a1a1a;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
         }
         /* Mobile Responsiveness */
         @media (max-width: 768px) {
@@ -488,19 +523,22 @@
             <li id="onboardingLink"><a href="#" data-section="onboarding">Onboarding</a></li>
             <li><a href="#" data-section="job-intake">Job Intake</a></li>
             <li><a href="#" data-section="dashboard" class="active">Dashboard</a></li>
+            <li id="userManagementLink" style="display: none;"><a href="#" data-section="user-management">User Management</a></li>
         </ul>
     </nav>
     <div class="container">
         <!-- Onboarding Section -->
         <div id="onboarding" class="section">
             <h1>Welcome to Mason Worx</h1>
-            <p>Select your role to get started:</p>
+            <p>Enter your email and password to log in, or select your role to get started:</p>
+            <input type="email" id="loginEmail" placeholder="Email" required>
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <button onclick="login()">Log In</button>
+            <h2>Select Your Role (New Users)</h2>
             <div class="role-grid">
                 <div class="role-card" onclick="selectRole('Admin')">Admin</div>
-                <div class="role-card" onclick="selectRole('Secondary Admin')">Secondary Admin</div>
                 <div class="role-card" onclick="selectRole('Foreman')">Foreman</div>
                 <div class="role-card" onclick="selectRole('Laborer')">Laborer</div>
-                <div class="role-card" onclick="selectRole('Bookkeeper')">Bookkeeper</div>
             </div>
         </div>
         <!-- Job Intake Section -->
@@ -534,7 +572,7 @@
         </div>
         <!-- Dashboard Section -->
         <div id="dashboard" class="section">
-            <h1>Dashboard (Admin)</h1>
+            <h1>Dashboard (<span id="dashboardRole">Admin</span>)</h1>
             <div class="dashboard-grid">
                 <div class="dashboard-card job-overview">
                     <h2>Job Overview</h2>
@@ -593,19 +631,25 @@
                 </div>
                 <div class="dashboard-card tasks">
                     <h2>Tasks</h2>
-                    <ul>
+                    <ul id="taskList">
                         <li><input type="checkbox"> Review estimate for MW515</li>
                         <li><input type="checkbox"> Schedule site visit for new client</li>
                     </ul>
+                    <div id="assignTaskForm" style="display: none;">
+                        <h3>Assign Task</h3>
+                        <select id="taskAssignee">
+                            <option value="">Select User</option>
+                        </select>
+                        <input type="text" id="taskDescription" placeholder="Task Description">
+                        <button onclick="assignTask()">Assign Task</button>
+                    </div>
                 </div>
                 <div class="dashboard-card messages">
                     <h2>Messages</h2>
-                    <ul id="messageList">
-                        <li>
-                            <div class="avatar">M</div>
-                            <div>Mike Hirsch<br><small>2:15 PM</small><br>I’ve uploaded photos from today’s job site.</div>
-                        </li>
-                    </ul>
+                    <select id="chatRecipient">
+                        <option value="">Select Recipient</option>
+                    </select>
+                    <ul id="messageList"></ul>
                     <input type="text" id="messageInput" placeholder="Type a message...">
                     <button onclick="sendMessage()">Send</button>
                 </div>
@@ -615,22 +659,99 @@
                 </div>
             </div>
         </div>
+        <!-- User Management Section -->
+        <div id="user-management" class="section">
+            <h1>User Management</h1>
+            <h2>Add New User</h2>
+            <form id="addUserForm" onsubmit="addUser(event)">
+                <input type="text" id="newUserName" placeholder="Full Name" required>
+                <input type="email" id="newUserEmail" placeholder="Email" required>
+                <input type="password" id="newUserTempPassword" placeholder="Temporary Password" required>
+                <select id="newUserRole" required>
+                    <option value="">Select Role</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Foreman">Foreman</option>
+                    <option value="Laborer">Laborer</option>
+                </select>
+                <button type="submit">Add User</button>
+            </form>
+            <h2>Existing Users</h2>
+            <div class="user-management">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>First Login</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userList"></tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Password Change Modal -->
+        <div class="password-modal" id="passwordModal">
+            <div class="password-modal-content">
+                <h2>Change Password</h2>
+                <p>You must change your password on first login.</p>
+                <input type="password" id="newPassword" placeholder="New Password" required>
+                <input type="password" id="confirmNewPassword" placeholder="Confirm New Password" required>
+                <button onclick="changePassword()">Submit</button>
+            </div>
+        </div>
     </div>
     <script>
-        // Check if onboarding is complete
-        const roleAssigned = localStorage.getItem('userRole');
+        // In-memory user database (replace with a proper database later)
+        let users = [
+            { email: "admin@example.com", password: hashPassword("admin123"), name: "Admin User", role: "Admin", firstLogin: false }
+        ];
+
+        // In-memory messages and tasks
+        let messages = [];
+        let tasks = [
+            { description: "Review estimate for MW515", assignee: "admin@example.com" },
+            { description: "Schedule site visit for new client", assignee: "admin@example.com" }
+        ];
+
+        // Simple password hashing (for demo purposes; use a proper library like bcrypt in production)
+        function hashPassword(password) {
+            return btoa(password); // Base64 encoding (not secure; for demo only)
+        }
+
+        function verifyPassword(password, hashed) {
+            return hashPassword(password) === hashed;
+        }
+
+        // Check if user is logged in
+        const loggedInUser = localStorage.getItem('loggedInUser');
         const onboardingLink = document.getElementById('onboardingLink');
+        const userManagementLink = document.getElementById('userManagementLink');
         const sections = document.querySelectorAll('.section');
         const navLinks = document.querySelectorAll('.navbar a');
 
-        if (roleAssigned) {
-            onboardingLink.style.display = 'none';
-            document.getElementById('dashboard').classList.add('active');
-            navLinks.forEach(link => {
-                if (link.getAttribute('data-section') === 'dashboard') {
-                    link.classList.add('active');
+        if (loggedInUser) {
+            const user = users.find(u => u.email === loggedInUser);
+            if (user) {
+                onboardingLink.style.display = 'none';
+                document.getElementById('dashboard').classList.add('active');
+                document.getElementById('dashboardRole').textContent = user.role;
+                navLinks.forEach(link => {
+                    if (link.getAttribute('data-section') === 'dashboard') {
+                        link.classList.add('active');
+                    }
+                });
+                if (user.role === 'Admin') {
+                    userManagementLink.style.display = 'block';
                 }
-            });
+                if (user.firstLogin) {
+                    document.getElementById('passwordModal').style.display = 'block';
+                }
+                populateChatRecipients();
+                populateTaskAssignees();
+                displayMessages();
+                displayTasks();
+            }
         } else {
             document.getElementById('onboarding').classList.add('active');
             navLinks.forEach(link => {
@@ -638,6 +759,60 @@
                     link.classList.add('active');
                 }
             });
+        }
+
+        // Login function
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const user = users.find(u => u.email === email && verifyPassword(password, u.password));
+
+            if (user) {
+                localStorage.setItem('loggedInUser', email);
+                alert(`Welcome, ${user.name}!`);
+                onboardingLink.style.display = 'none';
+                sections.forEach(section => section.classList.remove('active'));
+                navLinks.forEach(a => a.classList.remove('active'));
+                document.getElementById('dashboard').classList.add('active');
+                document.getElementById('dashboardRole').textContent = user.role;
+                navLinks.forEach(link => {
+                    if (link.getAttribute('data-section') === 'dashboard') {
+                        link.classList.add('active');
+                    }
+                });
+                if (user.role === 'Admin') {
+                    userManagementLink.style.display = 'block';
+                }
+                if (user.firstLogin) {
+                    document.getElementById('passwordModal').style.display = 'block';
+                }
+                populateChatRecipients();
+                populateTaskAssignees();
+                displayMessages();
+                displayTasks();
+            } else {
+                alert('Invalid email or password.');
+            }
+        }
+
+        // Change password on first login
+        function changePassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+            const email = localStorage.getItem('loggedInUser');
+
+            if (newPassword !== confirmNewPassword) {
+                alert('Passwords do not match.');
+                return;
+            }
+
+            const user = users.find(u => u.email === email);
+            if (user) {
+                user.password = hashPassword(newPassword);
+                user.firstLogin = false;
+                document.getElementById('passwordModal').style.display = 'none';
+                alert('Password changed successfully.');
+            }
         }
 
         // Navbar toggle for mobile
@@ -660,18 +835,82 @@
             });
         });
 
-        // Role selection
+        // Role selection (for initial setup)
         function selectRole(role) {
-            localStorage.setItem('userRole', role);
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) {
+                alert('Please enter your email and password to select a role.');
+                return;
+            }
+            const user = users.find(u => u.email === email);
+            if (!user) {
+                alert('User not found. Please log in with an invited email or contact an admin.');
+                return;
+            }
+            user.role = role;
+            localStorage.setItem('loggedInUser', email);
             alert(`Role assigned: ${role}. Redirecting to Dashboard.`);
             onboardingLink.style.display = 'none';
             sections.forEach(section => section.classList.remove('active'));
             navLinks.forEach(a => a.classList.remove('active'));
             document.getElementById('dashboard').classList.add('active');
+            document.getElementById('dashboardRole').textContent = role;
             navLinks.forEach(link => {
                 if (link.getAttribute('data-section') === 'dashboard') {
                     link.classList.add('active');
                 }
+            });
+            if (role === 'Admin') {
+                userManagementLink.style.display = 'block';
+            }
+            populateChatRecipients();
+            populateTaskAssignees();
+            displayMessages();
+            displayTasks();
+        }
+
+        // Add new user
+        function addUser(event) {
+            event.preventDefault();
+            const name = document.getElementById('newUserName').value;
+            const email = document.getElementById('newUserEmail').value;
+            const tempPassword = document.getElementById('newUserTempPassword').value;
+            const role = document.getElementById('newUserRole').value;
+
+            if (users.find(u => u.email === email)) {
+                alert('User with this email already exists.');
+                return;
+            }
+
+            users.push({
+                email: email,
+                password: hashPassword(tempPassword),
+                name: name,
+                role: role,
+                firstLogin: true
+            });
+
+            console.log(`User invited: ${email} with temporary password: ${tempPassword}`);
+            alert(`User ${name} (${email}) added successfully with role ${role}. Temporary password: ${tempPassword}`);
+
+            displayUsers();
+            document.getElementById('addUserForm').reset();
+        }
+
+        // Display users in the table
+        function displayUsers() {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>${user.role}</td>
+                    <td>${user.firstLogin ? 'Yes' : 'No'}</td>
+                `;
+                userList.appendChild(row);
             });
         }
 
@@ -710,28 +949,25 @@
             const jobType = document.getElementById('jobType').value;
             const files = document.getElementById('plans').files;
 
-            // Prepare file data (if a file is selected)
             let fileData = null;
             let fileName = "None";
             let fileType = null;
             if (files.length > 0) {
                 const file = files[0];
                 fileName = file.name;
-                fileType = file.type || "application/octet-stream"; // Default to generic type if unknown
+                fileType = file.type || "application/octet-stream";
                 fileData = await new Promise((resolve) => {
                     const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result.split(',')[1]); // Get base64 data (remove "data:image/jpeg;base64," prefix)
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
                     reader.readAsDataURL(file);
                 });
             }
 
-            // Log the file details to check if it's being read correctly
             console.log("File Name:", fileName);
             console.log("File Type:", fileType);
             console.log("File Data Length:", fileData ? fileData.length : "No data");
             console.log("File Data Preview:", fileData ? fileData.substring(0, 50) : "No data");
 
-            // Prepare job data
             const jobData = {
                 address: address,
                 client: client,
@@ -744,7 +980,6 @@
                 fileData: fileData
             };
 
-            // Update preview
             document.getElementById('previewAddress').textContent = address;
             document.getElementById('previewClient').textContent = client;
             document.getElementById('previewPoc').textContent = `${pocName} (${pocPhone}, ${pocEmail})`;
@@ -752,7 +987,6 @@
             document.getElementById('previewFiles').textContent = fileName;
             document.getElementById('jobPreview').classList.add('active');
 
-            // Send to Google Apps Script via proxy
             const scriptUrl = "/api/proxy";
             try {
                 console.log("Submitting job data:", jobData);
@@ -780,19 +1014,59 @@
             document.getElementById('jobForm').reset();
         }
 
-        // Send message
+        // Chat functionality
+        function populateChatRecipients() {
+            const chatRecipient = document.getElementById('chatRecipient');
+            chatRecipient.innerHTML = '<option value="">Select Recipient</option>';
+            const currentUser = localStorage.getItem('loggedInUser');
+            users.forEach(user => {
+                if (user.email !== currentUser) {
+                    const option = document.createElement('option');
+                    option.value = user.email;
+                    option.textContent = user.name;
+                    chatRecipient.appendChild(option);
+                }
+            });
+        }
+
         function sendMessage() {
+            const recipient = document.getElementById('chatRecipient').value;
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
-            if (!message) return;
-            const messageList = document.getElementById('messageList');
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <div class="avatar">A</div>
-                <div>You<br><small>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small><br>${message}</div>
-            `;
-            messageList.appendChild(li);
+            if (!recipient || !message) {
+                alert('Please select a recipient and enter a message.');
+                return;
+            }
+            const sender = localStorage.getItem('loggedInUser');
+            const senderUser = users.find(u => u.email === sender);
+            messages.push({
+                sender: sender,
+                senderName: senderUser.name,
+                recipient: recipient,
+                message: message,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
             input.value = '';
+            displayMessages();
+        }
+
+        function displayMessages() {
+            const messageList = document.getElementById('messageList');
+            messageList.innerHTML = '';
+            const currentUser = localStorage.getItem('loggedInUser');
+            const recipient = document.getElementById('chatRecipient').value;
+            const filteredMessages = messages.filter(msg =>
+                (msg.sender === currentUser && msg.recipient === recipient) ||
+                (msg.sender === recipient && msg.recipient === currentUser)
+            );
+            filteredMessages.forEach(msg => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="avatar">${msg.senderName[0]}</div>
+                    <div>${msg.senderName}<br><small>${msg.timestamp}</small><br>${msg.message}</div>
+                `;
+                messageList.appendChild(li);
+            });
             messageList.scrollTop = messageList.scrollHeight;
         }
 
@@ -801,34 +1075,73 @@
             if (e.key === 'Enter') sendMessage();
         });
 
+        // Task assignment functionality
+        function populateTaskAssignees() {
+            const taskAssignee = document.getElementById('taskAssignee');
+            taskAssignee.innerHTML = '<option value="">Select User</option>';
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.email;
+                option.textContent = user.name;
+                taskAssignee.appendChild(option);
+            });
+            const currentUser = localStorage.getItem('loggedInUser');
+            const user = users.find(u => u.email === currentUser);
+            if (user && user.role === 'Admin') {
+                document.getElementById('assignTaskForm').style.display = 'block';
+            }
+        }
+
+        function assignTask() {
+            const assignee = document.getElementById('taskAssignee').value;
+            const description = document.getElementById('taskDescription').value.trim();
+            if (!assignee || !description) {
+                alert('Please select an assignee and enter a task description.');
+                return;
+            }
+            tasks.push({
+                description: description,
+                assignee: assignee
+            });
+            document.getElementById('taskDescription').value = '';
+            displayTasks();
+        }
+
+        function displayTasks() {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            const currentUser = localStorage.getItem('loggedInUser');
+            const filteredTasks = tasks.filter(task => task.assignee === currentUser);
+            filteredTasks.forEach(task => {
+                const li = document.createElement('li');
+                li.innerHTML = `<input type="checkbox"> ${task.description}`;
+                taskList.appendChild(li);
+            });
+        }
+
         // Fetch and display real weather data
         async function fetchWeather(event) {
-            if (event) event.stopPropagation(); // Prevent modal from opening when clicking refresh
+            if (event) event.stopPropagation();
             try {
-                // Get the user's location
                 const position = await new Promise((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(resolve, reject);
                 });
                 const latitude = position.coords.latitude;
                 const longitude = position.coords.longitude;
 
-                // Fetch weather data
                 const response = await fetch(`/api/weather?lat=${latitude}&lon=${longitude}`);
                 const data = await response.json();
 
-                // Update summary view
                 document.getElementById('weather-temp').textContent = `${data.current.temperature}°`;
                 document.getElementById('weather-icon').textContent = data.current.icon;
                 document.getElementById('weather-condition').textContent = data.current.condition;
                 document.getElementById('weather-location').textContent = data.current.location;
 
-                // Apply gradient background based on condition
                 const weatherCard = document.querySelector('.weather');
                 weatherCard.style.background = getGradientForCondition(data.current.condition);
 
-                // Update minute-by-minute forecast on main card
                 const minuteForecastContainer = document.getElementById('minute-forecast-bars');
-                const maxPrecip = Math.max(...data.minuteForecast.map(m => m.precipitation), 0.1); // Avoid division by 0
+                const maxPrecip = Math.max(...data.minuteForecast.map(m => m.precipitation), 0.1);
                 minuteForecastContainer.innerHTML = data.minuteForecast.map(minute => `
                     <div class="minute-bar" style="height: ${(minute.precipitation / maxPrecip) * 100}%">
                         <span class="minute-bar-label">${minute.label}</span>
@@ -836,7 +1149,6 @@
                 `).join('');
                 document.getElementById('rain-start-message').textContent = data.rainStartMessage;
 
-                // Update 8-hour forecast on main card
                 const hourly8Container = document.getElementById('hourly-forecast-8');
                 hourly8Container.innerHTML = data.hourly8.map(hour => `
                     <div>
@@ -846,13 +1158,11 @@
                     </div>
                 `).join('');
 
-                // Update modal view
                 document.getElementById('weather-temp-modal').textContent = `${data.current.temperature}°`;
                 document.getElementById('weather-icon-modal').textContent = data.current.icon;
                 document.getElementById('weather-condition-modal').textContent = data.current.condition;
                 document.getElementById('weather-location-modal').textContent = data.current.location;
 
-                // Update minute-by-minute forecast in modal
                 const minuteForecastModalContainer = document.getElementById('minute-forecast-bars-modal');
                 minuteForecastModalContainer.innerHTML = data.minuteForecast.map(minute => `
                     <div class="minute-bar" style="height: ${(minute.precipitation / maxPrecip) * 100}%">
@@ -861,7 +1171,6 @@
                 `).join('');
                 document.getElementById('rain-start-message-modal').textContent = data.rainStartMessage;
 
-                // Update 10-day forecast in modal
                 const forecastContainer = document.getElementById('weather-forecast');
                 forecastContainer.innerHTML = data.forecast.map((day, index) => `
                     <div class="forecast-day" onclick="toggleDayDetails(${index})">
@@ -887,7 +1196,6 @@
                 `).join('');
             } catch (error) {
                 console.error("Error fetching weather:", error);
-                // Fallback to fake data if the API fails
                 document.getElementById('weather-temp').textContent = "72°";
                 document.getElementById('weather-icon').textContent = "☀️";
                 document.getElementById('weather-condition').textContent = "Sunny";
@@ -909,27 +1217,19 @@
 
         // Toggle expandable day details and collapse others
         function toggleDayDetails(index) {
-            event.stopPropagation(); // Prevent modal from closing
-
-            // Check if the day has hourly data (only current day and next day have data)
-            const hasHourlyData = index <= 1; // Current day (0) and next day (1)
-
+            event.stopPropagation();
+            const hasHourlyData = index <= 1;
             if (!hasHourlyData) {
-                // Apply bounce effect for days without hourly data
                 const dayElement = document.querySelectorAll('.forecast-day')[index];
                 dayElement.classList.add('bounce');
                 return;
             }
-
-            // Collapse all other expanded details
             const allDetails = document.querySelectorAll('.forecast-details');
             allDetails.forEach((detail, i) => {
                 if (i !== index) {
                     detail.classList.remove('active');
                 }
             });
-
-            // Toggle the clicked day's details
             const details = document.getElementById(`day-details-${index}`);
             details.classList.toggle('active');
         }
@@ -948,47 +1248,41 @@
         function getGradientForCondition(condition) {
             switch (condition.toLowerCase()) {
                 case "clear sky":
-                    return "linear-gradient(135deg, #f7b733, #fc4a1a)"; // Sunny gradient
+                    return "linear-gradient(135deg, #f7b733, #fc4a1a)";
                 case "few clouds":
                 case "scattered clouds":
                 case "broken clouds":
                 case "overcast clouds":
-                    return "linear-gradient(135deg, #bdc3c7, #2c3e50)"; // Cloudy gradient
+                    return "linear-gradient(135deg, #bdc3c7, #2c3e50)";
                 case "light rain":
                 case "moderate rain":
                 case "heavy rain":
                 case "rain":
-                    return "linear-gradient(135deg, #4b6cb7, #182848)"; // Rainy gradient
+                    return "linear-gradient(135deg, #4b6cb7, #182848)";
                 case "thunderstorm":
-                    return "linear-gradient(135deg, #2c3e50, #4b5e67)"; // Stormy gradient
+                    return "linear-gradient(135deg, #2c3e50, #4b5e67)";
                 default:
-                    return "linear-gradient(135deg, #bdc3c7, #2c3e50)"; // Default gradient
+                    return "linear-gradient(135deg, #bdc3c7, #2c3e50)";
             }
         }
 
-        // Fetch and display live tracking data
+        // Fetch live tracking data (on hold)
         async function fetchLiveTracking() {
             try {
                 const response = await fetch('/api/live-tracking');
                 const data = await response.json();
-
                 const statusElement = document.getElementById('live-tracking-status');
                 if (!data.vehicles || data.vehicles.length === 0) {
                     statusElement.textContent = "No vehicles found.";
                     return;
                 }
-
                 statusElement.textContent = `${data.vehicles.length} vehicles online`;
-
-                // Initialize Google Map when tile is expanded
                 const mapElement = document.getElementById('live-tracking-map');
                 if (mapElement.classList.contains('expanded')) {
                     const map = new google.maps.Map(mapElement, {
                         center: { lat: data.vehicles[0].latitude, lng: data.vehicles[0].longitude },
                         zoom: 10
                     });
-
-                    // Add markers for each vehicle
                     data.vehicles.forEach(vehicle => {
                         new google.maps.Marker({
                             position: { lat: vehicle.latitude, lng: vehicle.longitude },
@@ -1003,28 +1297,26 @@
             }
         }
 
-        // Toggle live tracking tile expansion
         function toggleLiveTrackingTile(event) {
-            event.stopPropagation(); // Prevent any parent click events
+            event.stopPropagation();
             const mapElement = document.getElementById('live-tracking-map');
             mapElement.classList.toggle('expanded');
             if (mapElement.classList.contains('expanded')) {
-                fetchLiveTracking(); // Refresh map when expanded
+                fetchLiveTracking();
             }
         }
 
-        // Show live tracking tile only for admins
+        document.getElementById('live-tracking-tile').addEventListener('click', toggleLiveTrackingTile);
+
         window.onload = () => {
             const role = localStorage.getItem('userRole');
             if (role === 'Admin') {
                 document.getElementById('live-tracking-tile').style.display = 'block';
-                fetchLiveTracking(); // Initial fetch for admins
+                fetchLiveTracking();
             }
-            fetchWeather(); // Initial fetch for weather
+            fetchWeather();
+            displayUsers();
         };
-
-        // Add click event to toggle expansion
-        document.getElementById('live-tracking-tile').addEventListener('click', toggleLiveTrackingTile);
     </script>
 </body>
 </html>
