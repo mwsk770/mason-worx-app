@@ -711,45 +711,63 @@
         }
 
         // Fetch all data from Google Sheet
-async function fetchSheetData() {
-    try {
-        const response = await fetch('/api/read-sheet');
-        const data = await response.json();
-        users = data.users || [];
-        messages = data.messages || [];
-        tasks = data.tasks || [];
+        async function fetchSheetData() {
+            try {
+                console.log("Fetching data from Google Sheet...");
+                const response = await fetch('/api/read-sheet');
+                const data = await response.json();
+                console.log("Fetched data:", data);
+                users = data.users || [];
+                messages = data.messages || [];
+                tasks = data.tasks || [];
 
-        // If no users are found in the sheet, initialize with the admin user
-        if (users.length === 0) {
-            users = [
-                { email: "alex@masonworxnj.com", password: hashPassword("Sendy0841!"), name: "Alex Kantor", role: "Admin", firstLogin: false }
-            ];
-            // Write the admin user to the sheet
-            await writeSheetData('Users', ["alex@masonworxnj.com", hashPassword("Sendy0841!"), "Alex Kantor", "Admin", "false"]);
+                // Convert firstLogin to lowercase for comparison
+                users = users.map(user => ({
+                    ...user,
+                    firstLogin: user.firstLogin.toString().toLowerCase() === 'true'
+                }));
+
+                // If no users are found in the sheet, initialize with the admin user
+                if (users.length === 0) {
+                    console.log("No users found in sheet, initializing with admin user...");
+                    users = [
+                        { email: "alex@masonworxnj.com", password: hashPassword("Sendy0841!"), name: "Alex Kantor", role: "Admin", firstLogin: false }
+                    ];
+                    // Write the admin user to the sheet
+                    await writeSheetData('Users', ["alex@masonworxnj.com", hashPassword("Sendy0841!"), "Alex Kantor", "Admin", "false"]);
+                    console.log("Admin user added to sheet:", users);
+                }
+            } catch (error) {
+                console.error("Error fetching sheet data:", error);
+                // Fallback to admin user if fetch fails
+                console.log("Falling back to admin user...");
+                users = [
+                    { email: "alex@masonworxnj.com", password: hashPassword("Sendy0841!"), name: "Alex Kantor", role: "Admin", firstLogin: false }
+                ];
+                messages = [];
+                tasks = [];
+            }
+            console.log("Users after fetch:", users);
         }
-    } catch (error) {
-        console.error("Error fetching sheet data:", error);
-        // Fallback to admin user if fetch fails
-        users = [
-            { email: "alex@masonworxnj.com", password: hashPassword("Sendy0841!"), name: "Alex Kantor", role: "Admin", firstLogin: false }
-        ];
-        messages = [];
-        tasks = [];
-    }
-}
 
         // Write data to Google Sheet
         async function writeSheetData(sheet, data) {
             try {
-                await fetch('/api/write-sheet', {
+                console.log(`Writing to sheet '${sheet}':`, data);
+                const response = await fetch('/api/write-sheet', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ sheet, data })
                 });
+                const result = await response.json();
+                console.log(`Write response for sheet '${sheet}':`, result);
+                if (!result.success) {
+                    console.error(`Failed to write to sheet '${sheet}':`, result.error);
+                }
             } catch (error) {
-                console.error("Error writing to sheet:", error);
+                console.error(`Error writing to sheet '${sheet}':`, error);
             }
         }
 
@@ -800,7 +818,10 @@ async function fetchSheetData() {
         function login() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
+            console.log("Attempting login with email:", email);
+            console.log("Users array:", users);
             const user = users.find(u => u.email === email && verifyPassword(password, u.password));
+            console.log("Found user:", user);
 
             if (user) {
                 localStorage.setItem('loggedInUser', email);
@@ -841,11 +862,11 @@ async function fetchSheetData() {
                 return;
             }
 
-            const user = users.find(u => u.email === email);
-            if (user) {
-                user.password = hashPassword(newPassword);
-                user.firstLogin = false;
-                await writeSheetData('Users', [email, user.password, user.name, user.role, user.firstLogin.toString()]);
+            const userIndex = users.findIndex(u => u.email === email);
+            if (userIndex !== -1) {
+                users[userIndex].password = hashPassword(newPassword);
+                users[userIndex].firstLogin = false;
+                await writeSheetData('Users', [email, users[userIndex].password, users[userIndex].name, users[userIndex].role, users[userIndex].firstLogin.toString()]);
                 document.getElementById('passwordModal').style.display = 'none';
                 alert('Password changed successfully.');
             }
@@ -892,7 +913,7 @@ async function fetchSheetData() {
                 firstLogin: true
             };
             users.push(newUser);
-            await writeSheetData('Users', [email, newUser.password, name, role, 'true']);
+            await writeSheetData('Users', [email, newUser.password, name, role, newUser.firstLogin.toString()]);
 
             console.log(`User invited: ${email} with temporary password: ${tempPassword}`);
             alert(`User ${name} (${email}) added successfully with role ${role}. Temporary password: ${tempPassword}`);
