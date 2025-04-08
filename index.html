@@ -751,25 +751,31 @@
         }
 
         // Write data to Google Sheet
-        async function writeSheetData(sheet, data) {
-            try {
-                console.log(`Writing to sheet '${sheet}':`, data);
-                const response = await fetch('/api/write-sheet', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ sheet, data })
-                });
-                const result = await response.json();
-                console.log(`Write response for sheet '${sheet}':`, result);
-                if (!result.success) {
-                    console.error(`Failed to write to sheet '${sheet}':`, result.error);
-                }
-            } catch (error) {
-                console.error(`Error writing to sheet '${sheet}':`, error);
-            }
+async function writeSheetData(sheet, data) {
+    try {
+        console.log(`Attempting to write to sheet '${sheet}':`, data);
+        const response = await fetch('/api/write-sheet', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ sheet, data })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
+        const result = await response.json();
+        console.log(`Write response for sheet '${sheet}':`, result);
+        if (!result.success) {
+            console.error(`Failed to write to sheet '${sheet}':`, result.error);
+            throw new Error(`Failed to write to sheet: ${result.error}`);
+        }
+        console.log(`Successfully wrote to sheet '${sheet}'`);
+    } catch (error) {
+        console.error(`Error writing to sheet '${sheet}':`, error.message);
+        throw error;
+    }
+}
 
         // Check if user is logged in
         const loggedInUser = localStorage.getItem('loggedInUser');
